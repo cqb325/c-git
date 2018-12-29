@@ -1,0 +1,208 @@
+.cm-input{
+  border-radius: 3px;
+  padding: 4px 7px;
+  resize: none;
+  font-size: 12px;
+  height: 28px;
+  width: 168px;
+  line-height: 1.5;
+  position: relative;
+  color: rgba(0, 0, 0, 0.65);
+  background-color: #fff;
+  background-image: none;
+  border: 1px solid #d9d9d9;
+  -webkit-transition: all .3s;
+  transition: all .3s;
+  &:focus{
+    border-color: #49a9ee;
+    outline: 0;
+    box-shadow: 0 0 0 2px rgba(16, 142, 233, 0.2);
+  }
+  &.cm-input-large{
+    padding: 6px 11px;
+    height: 40px;
+    font-size: 16px;
+  }
+  &.cm-input-small{
+    padding: 1px 7px;
+    height: 24px;
+  }
+  &::-webkit-input-placeholder {
+    color: rgba(0,0,0,.3);
+  }
+}
+
+
+.cm-input-group-wrap {
+  display: inline-block;
+  vertical-align: top;
+  width: 100%;
+  .cm-input-group{
+    font-size: 14px;
+    line-height: 1.5;
+    color: rgba(0, 0, 0, 0.65);
+    -webkit-box-sizing: border-box;
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    position: relative;
+    display: table;
+    border-collapse: separate;
+    border-spacing: 0;
+    width: 100%;
+    >.cm-input{
+      float: left;
+      width: 100%;
+
+      &:first-child{
+        border-bottom-right-radius: 0;
+        border-top-right-radius: 0;
+      }
+      &:last-child{
+        border-bottom-left-radius: 0;
+        border-top-left-radius: 0;
+      }
+      &:not(:first-child):not(:last-child){
+        border-radius: 0;
+      }
+    }
+    .cm-input-group-addon:first-child{
+      border-bottom-right-radius: 0;
+      border-top-right-radius: 0;
+      border-right: 0;
+    }
+    .cm-input-group-addon:last-child{
+      border-bottom-left-radius: 0;
+      border-top-left-radius: 0;
+      border-left: 0;
+    }
+  }
+}
+
+.cm-input-affix-wrap{
+  display: inline-block;
+  vertical-align: top;
+  width: 100%;
+  position: relative;
+  .cm-input{
+    width: 100%;
+    &:not(:first-child){
+      padding-left: 30px;
+    }
+    &:not(:last-child){
+      padding-right: 30px;
+    }
+  }
+  .cm-input-suffix,
+  .cm-input-prefix{
+    position: absolute;
+    display: inline-block;
+    width: 30px;
+    text-align: center;
+    left: 0;
+    top: 50%;
+    z-index: 1;
+    -webkit-transform: translateY(-50%);
+    -moz-transform: translateY(-50%);
+    -ms-transform: translateY(-50%);
+    transform: translateY(-50%);
+    color: rgba(0, 0, 0, 0.65);
+  }
+  .cm-input-suffix{
+    left: auto;
+    right: 0;
+    .cm-button{
+      position: absolute;
+      right: 0;
+      height: 28px;
+      border-radius: 3px;
+      border-top-left-radius: 0;
+      border-bottom-left-radius: 0;
+      -webkit-transform: translateY(-50%);
+      -moz-transform: translateY(-50%);
+      -ms-transform: translateY(-50%);
+      transform: translateY(-50%);
+    }
+  }
+  &.cm-input-affix-wrap-large{
+    .cm-input-suffix{
+      .cm-button{
+        padding: 10px 15px 10px 15px;
+        font-size: 14px;
+        height: 40px;
+      }
+    }
+  }
+  &.cm-input-affix-wrap-small{
+    .cm-input-suffix{
+      .cm-button{
+        height: 24px;
+        padding: 3px 7px;
+      }
+    }
+  }
+}
+
+.cm-input-group{
+  .cm-input-group-addon,
+  .cm-input{
+    display: table-cell;
+  }
+  .cm-input-group-addon{
+    .cm-select{
+      margin-left: -8px;
+      margin-right: -8px;
+      display: inline-block;
+    }
+    .cm-select .cm-select-value{
+      border-color: transparent;
+      background-color: transparent;
+      height: 100%;
+    }
+    .cm-select.cm-select-active .cm-select-value{
+      border-color: transparent;
+      box-shadow: none;
+    }
+  }
+  .cm-select .cm-select-value-text{
+    line-height: 24px;
+  }
+}
+
+.cm-input-group-wrap-small{
+  .cm-input-group{
+    .cm-select .cm-select-value-text{
+      line-height: 19px;
+    }
+    .cm-select .cm-select-options-wrap{
+      top: 26px;
+    }
+  }
+}
+
+.cm-input-group-wrap-large{
+  .cm-input-group{
+    .cm-select .cm-select-options-wrap{
+      top: 35px;
+    }
+  }
+}
+
+.cm-input-group-addon{
+  width: 1px;
+  padding: 0 11px;
+  font-size: 14px;
+  font-weight: normal;
+  line-height: 1;
+  color: rgba(0, 0, 0, 0.65);
+  text-align: center;
+  background-color: #fafafa;
+  border: 1px solid #d9d9d9;
+  border-radius: 3px;
+  position: relative;
+  -webkit-transition: all .3s;
+  transition: all .3s;
+  white-space: nowrap;
+  vertical-align: middle;
+}

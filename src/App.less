@@ -1,0 +1,100 @@
+html,body{
+    height: 100%;
+}
+body{
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Helvetica, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", SimSun, sans-serif;
+    font-weight: 400;
+    margin: 0;
+    padding: 0;
+    line-height: 1.5;
+    font-size: 13px;
+    margin: 0;
+    padding: 0;
+    color: #eee;
+}
+.cm-layout,
+#root{
+    height: 100%;
+    background: #313641;
+}
+.cm-tree{
+    color: #6DBD89;
+}
+.icon_leaf,
+.icon_branch{
+    background-image: url(./images/default_folder.svg)!important;
+}
+.node_open > .tree_cont > .icon_branch{
+    background-image: url(./images/default_folder_opened.svg)!important;
+}
+.node_selected {
+    background-color: #715050!important;
+}
+.cm-resize-content-drag-helper{
+    background: #007ACC!important;
+    .cm-resize-content-drag-track{
+        display: none;
+    }
+}
+.cm-resize-content-body{
+    background: transparent!important;
+}
+::-webkit-scrollbar {
+    width: 4px!important;
+    height: 4px!important;
+    background: transparent!important;
+}
+::-webkit-scrollbar-thumb {
+    width: 4px;
+    height: 4px;
+    background: #000;
+    border-radius: 4px;
+}
+
+.cm-panel{
+    background: rgba(0,0,0,.8)!important;
+    box-shadow: 0 0 10px rgba(0,0,0,.5)!important;
+    .cm-button.default{
+        color: #eee;
+        background: rgba(200,200,200,.5);
+    }
+}
+.cm-panel-title{
+    border-bottom: 1px solid #555!important;
+}
+.cm-panel .cm-panel-footer{
+    border-top: 1px solid #555!important;
+}
+.cm-input{
+    background-color: #ddd!important;
+    border-radius: 4px;
+    &:focus{
+        outline: none;
+    }
+}
+.cm-checkbox-group.cm-checkbox-group-stack .cm-checkbox,
+.cm-radio-group.cm-radio-group-stack .cm-checkbox{
+    line-height: 30px;
+    .cm-checkbox-outter{
+        top: 3px;
+    }
+}
+.cm-input-disabled{
+    background-color: #555!important;
+}
+
+.cm-table > thead > tr > th{
+    background: transparent!important;
+    color: #eee!important;
+}
+.cm-table > tbody > tr > td,
+.cm-table > thead > tr > th{
+    padding: 5px 8px!important;
+    border-bottom-color: #555!important;
+}
+.cm-table{
+    border-spacing: 1px;
+}
+.cm-select-cert{
+    color: #000;
+}

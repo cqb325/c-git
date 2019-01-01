@@ -1,5 +1,5 @@
 const electron = require('electron');
-const { app, BrowserWindow, globalShortcut } = electron;
+const { app, BrowserWindow, Menu, ipcMain, globalShortcut } = electron;
 let win;
 const Git = require('nodegit');
 require('./mainRepo');
@@ -7,12 +7,61 @@ global.Git = Git;
 global.GitResetDefault = Git.Reset.default;
 global.GitResetReset = Git.Reset.reset;
 
+let sender = null;
+ipcMain.on('connection', (event) => {
+    sender = event.sender;
+});
+
+const template = [
+    {
+        label: 'File',
+        submenu: [
+            { id: 1, label: 'open'},
+            { id: 2, label: 'open recent'},
+            { type: 'separator' },
+            { id: 3, label: 'welcome',  click () {
+                sender.send('menu_welcome');
+            }},
+            { role: 'quit' }
+        ]
+    },
+    {
+        label: 'View',
+        submenu: [
+            { role: 'reload' },
+            { role: 'forcereload' },
+            { role: 'toggledevtools' },
+            { type: 'separator' },
+            { role: 'togglefullscreen' }
+        ]
+    },
+    {
+        role: 'window',
+        submenu: [
+            { role: 'minimize' },
+            { role: 'close' }
+        ]
+    },
+    {
+        role: 'help',
+        submenu: [
+            {
+                label: 'about',
+                click () { }
+            }
+        ]
+    }
+];
+
+const menu = Menu.buildFromTemplate(template);
+Menu.setApplicationMenu(menu);
+
 function createWindow () {
     // 创建一个窗口.
     win = new BrowserWindow({
         width: 1500,
         height: 800,
-        icon: './src/imgs/logo.png',
+        icon: './src/images/logo.png',
         webPreferences: {
             nodeIntegrationInWorker: true
         }

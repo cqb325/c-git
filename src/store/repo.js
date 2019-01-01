@@ -37,6 +37,22 @@ export default class Repo {
     }
 
     setCurrentRepo (cwd, callback) {
+        try {
+            fs.accessSync(cwd, fs.constants.F_OK);
+            // 存在目录
+        } catch (e) {
+            // 不存在 目录
+            this.setCwd('');
+            return;
+        }
+        try {
+            fs.accessSync(`${cwd}/.git`, fs.constants.F_OK);
+            // 存在git目录
+        } catch (e) {
+            // 不存在目录
+            this.setCwd('');
+            return;
+        }
         if (this.cwd !== cwd) {
             if (this.watcher) {
                 this.watcher.unwatch(this.cwd);

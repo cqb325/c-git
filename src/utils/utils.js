@@ -66,4 +66,39 @@ export default class Utils {
             return code;
         }));
     }
+
+    static isGitDir (dir) {
+        try {
+            fs.accessSync(dir, fs.constants.F_OK);
+            // 存在目录
+        } catch (e) {
+            // 不存在 目录
+            return 'NOACCESS';
+        }
+        try {
+            fs.accessSync(`${dir}/.git`, fs.constants.F_OK);
+            // 存在git目录
+        } catch (e) {
+            // 不存在git目录
+            return 'NOGIT';
+        }
+        return 'OK';
+    }
+    
+    static getRepoInfo (dir) {
+        const config = gitConfig(dir);
+        let name;
+        if (config.remote) {
+            const url = config.remote.url;
+            name = path.basename(url, '.git');
+        } else {
+            name = path.basename(dir);
+        }
+
+        const ret = {name};
+        if (config.user) {
+            ret.user = config.user;
+        }
+        return ret;
+    }
 }

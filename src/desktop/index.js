@@ -7,8 +7,10 @@ import Status from './Status';
 import History from './History';
 import CommitInfo from './CommitInfo';
 import DiffContent from './DiffContent';
+import Welcome from './welcome';
+const {ipcRenderer} = require('electron');
 const {Content} = Layout;
-
+ipcRenderer.send('connection');
 import './style.less';
 
 import { inject, observer } from 'mobx-react';
@@ -27,8 +29,8 @@ class Desktop extends React.Component {
         this.props.repo.closeWatch();
     }
 
-    componentDidMount () {
-        this.props.repo.setCurrentRepo('E:/ideaWorkspaces/ops-portal', (event, path) => {
+    onSelectRepo = (dir) => {
+        this.props.repo.setCurrentRepo(dir, (event, path) => {
             console.log(event, path);
             if (path.indexOf('.git\\') !== -1) {
                 // stash change
@@ -76,6 +78,21 @@ class Desktop extends React.Component {
         });
     }
 
+    componentDidMount () {
+        ipcRenderer.on('menu_welcome', () => {
+            this.openWelcome();
+        });
+        const dir = sessionStorage.getItem('current_repo_cwd');
+        if (dir) {
+            this.onSelectRepo(dir);
+        }
+    }
+
+    openWelcome () {
+        sessionStorage.setItem('current_repo_cwd', '');
+        this.props.repo.setCwd('');
+    }
+
     bindStatus (ref) {
         this.status = ref;
     }
@@ -100,7 +117,7 @@ class Desktop extends React.Component {
         console.log('render index...');
         const {cwd, historyFile} = this.props.repo;
         if (!cwd) {
-            return null;
+            return <Welcome onSelectRepo={this.onSelectRepo}/>;
         }
 
         return <Layout style={{flexDirection: 'row'}}>

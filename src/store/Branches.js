@@ -29,7 +29,7 @@ export default class Branches {
             }
             map[remote.remote].push(remote);
         });
-        origns.forEach(origin => {
+        origns && origns.forEach(origin => {
             data.push({
                 ref: `orign_${origin.name}`, type: 'remote', name: origin.name, children: map[origin.name]
             });

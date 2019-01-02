@@ -7,6 +7,8 @@ import ResetContent from './history/ResetContent';
 import MessageContent from './history/MessageContent';
 import AddBranch from './branch/AddBranch';
 import AddTag from './history/AddTag';
+import AuthContent from './history/AuthContent';
+import utils from '../utils/utils';
 
 const {remote, clipboard, ipcRenderer} = require('electron');
 const SysMenu = remote.Menu;
@@ -90,12 +92,18 @@ class History extends React.Component {
     }
 
     async pushCommits () {
+        const hasHttpPass = utils.hasHttpPass(this.props.repo.cwd);
+        if (!hasHttpPass) {
+            this.authDialog.open();
+            return;
+        }
         ipcRenderer.send('push', this.props.repo.cwd);
         ipcRenderer.once('push_res', (event, err) => {
             if (err) {
                 Notification.error({
                     title: 'push错误',
-                    desc: err
+                    desc: err,
+                    theme: 'danger'
                 });
             }
         });
@@ -192,8 +200,6 @@ class History extends React.Component {
     }
 
     async editMessage (message, oid) {
-        console.log(message, oid);
-        
         try {
             await this.props.history.editMessage(message, oid);
         } catch (e) {
@@ -223,6 +229,24 @@ class History extends React.Component {
             return false;
         }
         return true;
+    }
+
+    onSaveAuthentication = (flag) => {
+        if (flag) {
+            if (this.authContent.isValid()) {
+                this.authDialog.showLoading();
+                const params = this.authContent.getValue();
+                this.saveAuthentication(params);
+            }
+            return false;
+        }
+        return true;
+    }
+
+    saveAuthentication (params) {
+        utils.saveAuthentication(this.props.repo.cwd, params);
+        this.authDialog.hideLoading();
+        this.authDialog.close();
     }
 
     async reset (id, type) {
@@ -329,6 +353,13 @@ class History extends React.Component {
                 okButtonText={'add tag'}
                 onConfirm={this.onAddTag}
                 content={<AddTag ref={f => this.addTagContent = f}/>}
+            />
+
+            <Dialog ref={f => this.authDialog = f}
+                title='Set Authentication'
+                okButtonText={'save'}
+                onConfirm={this.onSaveAuthentication}
+                content={<AuthContent ref={f => this.authContent = f}/>}
             />
         </div>;
     }

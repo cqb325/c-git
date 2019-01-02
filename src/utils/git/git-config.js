@@ -13,10 +13,9 @@ export default function (dir) {
     }
 
     if (dir) {
-        const newConfig = parseConfig(path.join(dir, '.git', 'config'));
+        const newConfig = parseConfig({cwd: dir, path: path.join(dir, '.git', 'config')});
         extend(true, config, newConfig);
     }
-    console.log(config);
 
     return config;
 }

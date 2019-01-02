@@ -84,8 +84,8 @@ export default class Repo {
     /**
      * 获取默认的提交模板
      */
-    getDefaultCommitTemplate () {
-        const temp = utils.getDefaultCommit(this.cwd);
+    getDefaultCommitTemplate (cwd) {
+        const temp = utils.getDefaultCommit(cwd);
         this.setCommitTemplate(temp);
     }
 

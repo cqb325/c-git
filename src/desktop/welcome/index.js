@@ -50,12 +50,18 @@ class Welcome extends React.Component {
                         this.store = new Configstore('c-git');
                     }
                     const info = utils.getRepoInfo(filePaths[0]);
-                    this.store.set(info.name, {
-                        name: info.name,
-                        dir: filePaths[0],
-                        lastOpenTime: new Date().getTime(),
-                        auth: info.user || {}
-                    });
+                    let storeItem = this.getItemByPath(filePaths[0]);
+                    if (!storeItem) {
+                        storeItem = {
+                            name: info.name,
+                            dir: filePaths[0],
+                            lastOpenTime: new Date().getTime(),
+                            auth: info.user || {}
+                        };
+                    } else {
+                        storeItem.lastOpenTime = new Date().getTime();
+                    }
+                    this.store.set(storeItem.name, storeItem);
 
                     if (this.props.onSelectRepo) {
                         sessionStorage.setItem('current_repo_cwd', filePaths[0]);
@@ -77,6 +83,16 @@ class Welcome extends React.Component {
                 }
             }
         });
+    }
+
+    getItemByPath (dir) {
+        for (const name in this.store.all) {
+            const item = this.store.all[name];
+            if (item.dir === dir) {
+                return item;
+            }
+        }
+        return null;
     }
 
     onCreateRepo = (flag) => {
@@ -278,6 +294,10 @@ class Welcome extends React.Component {
                     });
                 } else {
                     const info = utils.getRepoInfo(params.dir);
+                    const storeItem = this.getItemByPath(params.dir);
+                    if (storeItem) {
+                        this.store.delete(storeItem.name);
+                    }
                     this.store.set(info.name, {
                         name: info.name,
                         dir: params.dir,

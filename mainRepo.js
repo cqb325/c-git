@@ -1,5 +1,6 @@
 const electron = require('electron');
 const Git = require('nodegit');
+const Configstore = require('configstore');
 const { ipcMain } = electron;
 const path = require('path');
 const os = require('os');
@@ -9,6 +10,7 @@ const {
     Cred,
     Clone
 } = Git;
+const store = new Configstore('c-git');
 
 
 async function open (dir) {
@@ -54,8 +56,18 @@ function fetchOptions (credentials) {
     };
 }
 
+function getItemByPath (dir) {
+    for (const name in store.all) {
+        const item = store.all[name];
+        if (item.dir === dir) {
+            return item;
+        }
+    }
+    return null;
+}
+
 async function push (dir) {
-    const cred = fetchOptions();
+    let cred;
     let repo = await open(dir);
   
     const branch = await repo.getCurrentBranch();
@@ -68,6 +80,19 @@ async function push (dir) {
     const remote = await repo.getRemote(remoteName);
     const remoteBranchName = upstream.shorthand().replace(`${remoteName}/`, '');
     const refspec = `refs/heads/${branch.shorthand()}:refs/heads/${remoteBranchName}`;
+    const url = remote.url();
+    if (url.indexOf('ssh') !== -1) {
+        cred = fetchOptions({type: 'ssh'});
+    }
+    if (url.indexOf('http') !== -1) {
+        const storeInfo = getItemByPath(dir);
+        const auth = storeInfo.auth;
+        cred = fetchOptions({
+            type: 'http',
+            username: auth.username,
+            password: auth.password
+        });
+    }
   
     await remote.push([refspec], cred);
     repo.free();

@@ -31,7 +31,8 @@ class Status extends React.Component {
     }
 
     componentWillMount () {
-        this.props.status.getDefaultCommitTemplate();
+        const dir = this.props.repo.cwd;
+        this.props.status.getDefaultCommitTemplate(dir);
     }
 
     contextMenu = async (e) => {

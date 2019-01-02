@@ -3,9 +3,8 @@ const path = require('path');
 const fs = require('fs');
 const shell = remote.shell;
 const cp = require('child_process');
-const https = require('https');
+const Configstore = require('configstore');
 import gitConfig from './git/git-config';
-import { log } from 'core-js';
 
 export default class Utils {
     static openDir (cwd, relative) {
@@ -88,10 +87,16 @@ export default class Utils {
     
     static getRepoInfo (dir) {
         const config = gitConfig(dir);
+        let keys = Object.keys(config);
+        keys = keys.filter((item) => {
+            return item.indexOf('remote') !== -1;
+        });
+        const remoteKey = keys[0] || '';
         let name;
-        if (config.remote) {
-            const url = config.remote.url;
+        if (config[remoteKey]) {
+            const url = config[remoteKey].url;
             name = path.basename(url, '.git');
+            console.log(name);
         } else {
             name = path.basename(dir);
         }
@@ -124,5 +129,53 @@ export default class Utils {
         } catch (e) {
             console.log(e);
         }
+    }
+
+    /**
+     * 地址是http的但是没有设置用户名密码
+     * @param {*} cwd 
+     */
+    static hasHttpPass (cwd) {
+        const config = gitConfig(cwd);
+        const store = new Configstore('c-git');
+        const item = Utils.getItemByPath(store, cwd);
+        let keys = Object.keys(config);
+        keys = keys.filter((item) => {
+            return item.indexOf('remote') !== -1;
+        });
+        const remoteKey = keys[0] || '';
+        if (config[remoteKey]) {
+            const url = config[remoteKey].url;
+            if (url.indexOf('http') !== -1) {
+                const auth = item.auth;
+                if (!auth.username || !auth.password) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    static getItemByPath (store, dir) {
+        for (const name in store.all) {
+            const item = store.all[name];
+            if (item.dir === dir) {
+                return item;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * 设置用户名密码
+     * @param {*} cwd 
+     * @param {*} params 
+     */
+    static saveAuthentication (cwd, params) {
+        const store = new Configstore('c-git');
+        const item = Utils.getItemByPath(store, cwd);
+        item.auth.username = params.username;
+        item.auth.password = params.password;
+        store.set(item.name, item);
     }
 }

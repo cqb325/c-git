@@ -124,7 +124,8 @@ class History extends React.Component {
             if (err) {
                 Notification.error({
                     title: 'Add Branch',
-                    desc: err
+                    desc: err,
+                    theme: 'danger'
                 });
             } else {
                 this.addBranchDialog.hideLoading();
@@ -158,7 +159,8 @@ class History extends React.Component {
         } catch (e) {
             Notification.error({
                 title: 'Add Tag',
-                desc: e.message
+                desc: e.message,
+                theme: 'danger'
             });
         } finally {
             this.addTagDialog.hideLoading();
@@ -197,7 +199,8 @@ class History extends React.Component {
         } catch (e) {
             Notification.error({
                 title: 'Edit Message',
-                desc: e.message
+                desc: e.message,
+                theme: 'danger'
             });
         } finally {
             this.messageDialog.hideLoading();

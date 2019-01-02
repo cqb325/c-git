@@ -80,7 +80,7 @@ class FileTree extends React.Component {
 
     pull () {
         ipcRenderer.send('fetchAll', this.props.cwd);
-        ipcRenderer.on('fetchAll_res', async (event, err) => {
+        ipcRenderer.once('fetchAll_res', async (event, err) => {
             if (err) {
                 Notification.error({
                     title: 'fetch 错误',

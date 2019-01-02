@@ -135,7 +135,7 @@ class Branches extends React.Component {
 
     async pushCommits () {
         ipcRenderer.send('push', this.props.repo.cwd);
-        ipcRenderer.on('push_res', (event, err) => {
+        ipcRenderer.once('push_res', (event, err) => {
             if (err) {
                 Notification.error({
                     title: 'push错误',
@@ -242,7 +242,7 @@ class Branches extends React.Component {
     async addBranch (params, side) {
         params.dir = this.props.repo.cwd;
         ipcRenderer.send('addBranch', params);
-        ipcRenderer.on('addBranch_res', (event, err) => {
+        ipcRenderer.once('addBranch_res', (event, err) => {
             if (err) {
                 Notification.error({
                     title: 'Add Branch',

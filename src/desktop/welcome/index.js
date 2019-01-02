@@ -148,7 +148,7 @@ class Welcome extends React.Component {
                 name: 'master',
                 dir
             });
-            ipcRenderer.on('addBranch_res', (event, err) => {
+            ipcRenderer.once('addBranch_res', (event, err) => {
                 if (err) {
                     console.log(err);
                     
@@ -269,7 +269,7 @@ class Welcome extends React.Component {
         }
         try {
             ipcRenderer.send('clone', params);
-            ipcRenderer.on('clone_res', (event, err) => {
+            ipcRenderer.once('clone_res', (event, err) => {
                 if (err) {
                     Notification.error({
                         title: 'Clone Repository',

@@ -11,7 +11,7 @@ import CommitCotent from './status/CommitCotent';
 import utils from '../utils/utils';
 const path = require('path');
 
-const {remote, clipboard} = require('electron');
+const {remote} = require('electron');
 const SysMenu = remote.Menu;
 const MenuItem = remote.MenuItem;
 

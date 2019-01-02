@@ -23,6 +23,106 @@ class Branches extends React.Component {
         this.props.branches.getOrigns(this.props.repo.cwd);
     }
 
+    contextMenu = async (e) => {
+        e.preventDefault();
+        let menu;
+        if (Dom.closest(e.target, '.branches-group') || Dom.closest(e.target, '.branches-sub-node')) {
+            menu = new SysMenu();
+        }
+        if (Dom.closest(e.target, '.branches-sub-node')) {
+            let ele = Dom.closest(e.target, '.branches-sub-node');
+            ele = Dom.dom(ele);
+            const type = ele.data('type');
+
+            if (type === 'local') {
+                menu.append(new MenuItem({label: 'Check Out', click: () => {
+                    const name = ele.data('name');
+                    this.checkoutBranch(name, type);
+                }}));
+                menu.append(new MenuItem({label: 'Push', click: () => {
+                    this.pushCommits();
+                }}));
+                menu.append(new MenuItem({label: 'Delete', 
+                    enabled: !ele.hasClass('active'),
+                    click: () => {
+                        const name = ele.data('name');
+                        this.openDeleteConfirm(name, type);
+                    }}));
+                menu.append(new MenuItem({label: 'Set Tracked Branch', click: () => {
+                    const ref = ele.data('ref');
+                    const name = ele.data('name');
+                    this.openTrackedDialog(ref,name);
+                }}));
+                menu.append(new MenuItem({label: 'Stop Tracking',
+                    enabled: !!ele.data('remote'),
+                    click: () => {
+                        const ref = ele.data('ref');
+                        this.openStopConfirm(ref);
+                    }}));
+            }
+            if (type === 'tag') {
+                menu.append(new MenuItem({label: 'Check Out', click: () => {
+                    const name = ele.data('name');
+                    this.checkoutBranch(name, type);
+                }}));
+                menu.append(new MenuItem({label: 'Delete', click: () => {
+                    const name = ele.data('name');
+                    this.openDeleteConfirm(name, type);
+                }}));
+            }
+            if (type === 'remote') {
+                menu.append(new MenuItem({label: 'Check Out', click: () => {
+                    console.log('Check Out');
+                }}));
+                menu.append(new MenuItem({label: 'Log', click: () => {
+                    console.log('Log');
+                }}));
+                menu.append(new MenuItem({label: 'Delete', click: () => {
+                    console.log('Delete');
+                }}));
+            }
+            if (type === 'stash') {
+                menu.append(new MenuItem({label: 'Pop', click: async () => {
+                    const index = ele.data('index');
+                    await this.props.branches.stashPop(parseInt(index, 10));
+                }}));
+                menu.append(new MenuItem({label: 'Apply', click: () => {
+                    
+                }}));
+                menu.append(new MenuItem({label: 'Drop', click: () => {
+                    
+                }}));
+            }
+        }
+        if (Dom.closest(e.target, '.branches-group') && !Dom.closest(e.target, '.branches-sub-node')) {
+            let ele = Dom.closest(e.target, '.branches-group');
+            ele = Dom.dom(ele);
+            const type = ele.data('type');
+            if (type === 'local') {
+                menu.append(new MenuItem({label: 'Add Branch', click: () => {
+                    this.openAddBranch();
+                }}));
+            }
+            if (type === 'remote') {
+                menu.append(new MenuItem({label: 'Properties', click: () => {
+                    console.log('Properties');
+                }}));
+            }
+            if (type === 'tag') {
+                menu.append(new MenuItem({label: 'Add Tag', click: () => {
+                    console.log('Add Tag');
+                }}));
+            }
+        }
+        if (Dom.closest(e.target, '.branches-group') || Dom.closest(e.target, '.branches-sub-node')) {
+            menu.popup({window: remote.getCurrentWindow()});
+        }
+    }
+
+    componentWillUnmount () {
+        document.removeEventListener('contextmenu', this.contextMenu);
+    }
+
     componentDidMount () {
         this.refresh();
 
@@ -30,99 +130,7 @@ class Branches extends React.Component {
             this.props.bind(this);
         }
 
-        document.addEventListener('contextmenu', (e) => {
-            e.preventDefault();
-            let menu;
-            if (Dom.closest(e.target, '.branches-group') || Dom.closest(e.target, '.branches-sub-node')) {
-                menu = new SysMenu();
-            }
-            if (Dom.closest(e.target, '.branches-sub-node')) {
-                let ele = Dom.closest(e.target, '.branches-sub-node');
-                ele = Dom.dom(ele);
-                const type = ele.data('type');
-
-                if (type === 'local') {
-                    menu.append(new MenuItem({label: 'Check Out', click: () => {
-                        const name = ele.data('name');
-                        this.checkoutBranch(name, type);
-                    }}));
-                    menu.append(new MenuItem({label: 'Push', click: () => {
-                        this.pushCommits();
-                    }}));
-                    menu.append(new MenuItem({label: 'Delete', 
-                        enabled: !ele.hasClass('active'),
-                        click: () => {
-                            const name = ele.data('name');
-                            this.openDeleteConfirm(name, type);
-                        }}));
-                    menu.append(new MenuItem({label: 'Set Tracked Branch', click: () => {
-                        const ref = ele.data('ref');
-                        const name = ele.data('name');
-                        this.openTrackedDialog(ref,name);
-                    }}));
-                    menu.append(new MenuItem({label: 'Stop Tracking', click: () => {
-                        const ref = ele.data('ref');
-                        this.openStopConfirm(ref);
-                    }}));
-                }
-                if (type === 'tag') {
-                    menu.append(new MenuItem({label: 'Check Out', click: () => {
-                        const name = ele.data('name');
-                        this.checkoutBranch(name, type);
-                    }}));
-                    menu.append(new MenuItem({label: 'Delete', click: () => {
-                        const name = ele.data('name');
-                        this.openDeleteConfirm(name, type);
-                    }}));
-                }
-                if (type === 'remote') {
-                    menu.append(new MenuItem({label: 'Check Out', click: () => {
-                        console.log('Check Out');
-                    }}));
-                    menu.append(new MenuItem({label: 'Log', click: () => {
-                        console.log('Log');
-                    }}));
-                    menu.append(new MenuItem({label: 'Delete', click: () => {
-                        console.log('Delete');
-                    }}));
-                }
-                if (type === 'stash') {
-                    menu.append(new MenuItem({label: 'Pop', click: async () => {
-                        const index = ele.data('index');
-                        await this.props.branches.stashPop(parseInt(index, 10));
-                    }}));
-                    menu.append(new MenuItem({label: 'Apply', click: () => {
-                        
-                    }}));
-                    menu.append(new MenuItem({label: 'Drop', click: () => {
-                        
-                    }}));
-                }
-            }
-            if (Dom.closest(e.target, '.branches-group') && !Dom.closest(e.target, '.branches-sub-node')) {
-                let ele = Dom.closest(e.target, '.branches-group');
-                ele = Dom.dom(ele);
-                const type = ele.data('type');
-                if (type === 'local') {
-                    menu.append(new MenuItem({label: 'Add Branch', click: () => {
-                        this.openAddBranch();
-                    }}));
-                }
-                if (type === 'remote') {
-                    menu.append(new MenuItem({label: 'Properties', click: () => {
-                        console.log('Properties');
-                    }}));
-                }
-                if (type === 'tag') {
-                    menu.append(new MenuItem({label: 'Add Tag', click: () => {
-                        console.log('Add Tag');
-                    }}));
-                }
-            }
-            if (Dom.closest(e.target, '.branches-group') || Dom.closest(e.target, '.branches-sub-node')) {
-                menu.popup(remote.getCurrentWindow());
-            }
-        });
+        document.addEventListener('contextmenu', this.contextMenu, false);
     }
 
     async pushCommits () {
@@ -304,13 +312,13 @@ class Branches extends React.Component {
                     if (node.localOffset || node.remoteOffset) {
                         label = [node.name];
                         if (node.localOffset) {
-                            label.push(<span key='localOffset'>{` ${node.localOffset} > `}</span>);
+                            label.push(<span className='local-offset' key='localOffset'>{` ${node.localOffset} > `}</span>);
                         }
                         
                         if (node.remoteOffset) {
-                            label.push(<span  key='remoteOffset'>{` < ${node.remoteOffset} `}</span>);
+                            label.push(<span className='remote-offset' key='remoteOffset'>{` < ${node.remoteOffset} `}</span>);
                         }
-                        label.push(node.remote);
+                        label.push(<span key='remote' className='remote-name'>{node.remote}</span>);
                     } else {
                         label = `${node.name} = ${node.remote}`;
                     }
@@ -321,6 +329,7 @@ class Branches extends React.Component {
                 data-ref={node.ref}
                 data-name={node.name}
                 data-index={node.index}
+                data-remote={node.remote}
                 className={`branches-sub-node ${active ? 'active' : ''}`}
                 onDoubleClick={this.onSelectBranch.bind(this, node, type)}>
                 <span className='branches-arrow-node'></span>

@@ -12,6 +12,13 @@ export default class Repo {
 
     cwd = null;
 
+    initClient (cwd) {
+        if (this.cwd !== cwd) {
+            this.cwd = cwd;
+            this.client = new GitClient(cwd);
+        }
+    }
+
     async getStatus (cwd) {
         if (this.cwd !== cwd) {
             this.cwd = cwd;

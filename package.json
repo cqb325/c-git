@@ -13,6 +13,7 @@
   "dependencies": {
     "chokidar": "^2.0.4",
     "classnames": "^2.2.5",
+    "configstore": "^4.0.0",
     "diff2html": "^2.5.0",
     "git-config-path": "^2.0.0",
     "history": "^4.7.2",

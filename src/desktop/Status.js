@@ -34,6 +34,71 @@ class Status extends React.Component {
         this.props.status.getDefaultCommitTemplate();
     }
 
+    contextMenu = async (e) => {
+        e.preventDefault();
+        if (Dom.closest(e.target, '.status-item')) {
+            let ele = Dom.closest(e.target, '.status-item');
+            ele = Dom.dom(ele);
+            if (!ele.hasClass('selected')) {
+                const filePath = ele.data('path');
+                const files = this.data.filter((item, index) => {
+                    if (item.path === filePath) {
+                        this.lastStagedIndex = index;
+                    }
+                    return item.path === filePath;
+                });
+                if (files && files.length) {
+                    this.props.status.setCurrentFile(files[0]);
+                }
+            }
+            
+            const state = ele.data('state');
+            const type = ele.data('type');
+            
+            setTimeout(() => {
+                const hasUntracked = this.hasSelectedUntracked();
+                const menu = new SysMenu();
+                menu.append(new MenuItem({label: 'Show Changes',
+                    enabled: !(type === 'WT' && state === 'NEW'),
+                    click: () => {
+                        const filePath = ele.data('path');
+                        this.props.status.getDiffText(filePath);
+                    }}));
+                menu.append(new MenuItem({label: 'Open', click: () => {
+                    const dir = ele.data('dir');
+                    utils.openDir(this.props.repo.cwd, dir);
+                }}));
+                menu.append(new MenuItem({label: 'Log', 
+                    enabled: !(type === 'WT' && state === 'NEW'),
+                    click: () => {
+                        const filePath = ele.data('path');
+                        this.props.repo.setHistoryFile(filePath);
+                    }}));
+                menu.append(new MenuItem({label: 'Commit', click: () => {
+                    this.openCommitDialog();
+                }}));
+                menu.append(new MenuItem({label: 'Stage', enabled: type !== 'INDEX', click: () => {
+                    this.props.status.stage();
+                }}));
+                menu.append(new MenuItem({label: 'UnStage', enabled: type !== 'WT', click: () => {
+                    this.props.status.unStage();
+                }}));
+                menu.append(new MenuItem({label: 'Ignore',
+                    enabled: type === 'WT' && state === 'NEW',
+                    click: () => {
+                        const filePath = ele.data('path');
+                        this.openIgnore(filePath);
+                    }}));
+                menu.append(new MenuItem({label: 'Discard', 
+                    enabled: !hasUntracked,
+                    click: () => {
+                        this.props.status.discardFile();
+                    }}));
+                menu.popup(remote.getCurrentWindow());
+            }, 0);
+        }
+    }
+
     componentDidMount () {
         document.addEventListener('keyup', this.onKeyUp, false);
         document.addEventListener('keydown', this.onKeyDown, false);
@@ -44,75 +109,13 @@ class Status extends React.Component {
         const dir = this.props.repo.cwd;
         this.props.status.getStatus(dir);
 
-        document.addEventListener('contextmenu', (e) => {
-            e.preventDefault();
-            if (Dom.closest(e.target, '.status-item')) {
-                let ele = Dom.closest(e.target, '.status-item');
-                ele = Dom.dom(ele);
-                if (!ele.hasClass('selected')) {
-                    const filePath = ele.data('path');
-                    const files = this.data.filter((item, index) => {
-                        if (item.path === filePath) {
-                            this.lastStagedIndex = index;
-                        }
-                        return item.path === filePath;
-                    });
-                    if (files && files.length) {
-                        this.props.status.setCurrentFile(files[0]);
-                    }
-                }
-                
-                const state = ele.data('state');
-                const type = ele.data('type');
-                
-                setTimeout(() => {
-                    const hasUntracked = this.hasSelectedUntracked();
-                    const menu = new SysMenu();
-                    menu.append(new MenuItem({label: 'Show Changes',
-                        enabled: !(type === 'WT' && state === 'NEW'),
-                        click: () => {
-                            const filePath = ele.data('path');
-                            this.props.status.getDiffText(filePath);
-                        }}));
-                    menu.append(new MenuItem({label: 'Open', click: () => {
-                        const dir = ele.data('dir');
-                        utils.openDir(this.props.repo.cwd, dir);
-                    }}));
-                    menu.append(new MenuItem({label: 'Log', 
-                        enabled: !(type === 'WT' && state === 'NEW'),
-                        click: () => {
-                            const filePath = ele.data('path');
-                            this.props.repo.setHistoryFile(filePath);
-                        }}));
-                    menu.append(new MenuItem({label: 'Commit', click: () => {
-                        this.openCommitDialog();
-                    }}));
-                    menu.append(new MenuItem({label: 'Stage', enabled: type !== 'INDEX', click: () => {
-                        this.props.status.stage();
-                    }}));
-                    menu.append(new MenuItem({label: 'UnStage', enabled: type !== 'WT', click: () => {
-                        this.props.status.unStage();
-                    }}));
-                    menu.append(new MenuItem({label: 'Ignore',
-                        enabled: type === 'WT' && state === 'NEW',
-                        click: () => {
-                            const filePath = ele.data('path');
-                            this.openIgnore(filePath);
-                        }}));
-                    menu.append(new MenuItem({label: 'Discard', 
-                        enabled: !hasUntracked,
-                        click: () => {
-                            this.props.status.discardFile();
-                        }}));
-                    menu.popup(remote.getCurrentWindow());
-                }, 0);
-            }
-        });
+        document.addEventListener('contextmenu', this.contextMenu, false);
     }
 
     componentWillUnmount () {
         document.removeEventListener('keyup', this.onKeyUp);
         document.removeEventListener('keydown', this.onKeyDown);
+        document.removeEventListener('contextmenu', this.contextMenu);
     }
 
     hasSelectedUntracked () {

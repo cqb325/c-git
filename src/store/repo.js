@@ -43,15 +43,17 @@ export default class Repo {
         } catch (e) {
             // 不存在 目录
             this.setCwd('');
-            return;
+            sessionStorage.setItem('current_repo_cwd', '');
+            throw new Error(`${cwd} 该目录不存在`);
         }
         try {
             fs.accessSync(`${cwd}/.git`, fs.constants.F_OK);
             // 存在git目录
         } catch (e) {
-            // 不存在目录
             this.setCwd('');
-            return;
+            sessionStorage.setItem('current_repo_cwd', '');
+            throw new Error(`${cwd} 该目录不是一个git仓库`);
+            // 不存在目录
         }
         if (this.cwd !== cwd) {
             if (this.watcher) {

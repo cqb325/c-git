@@ -3,8 +3,9 @@ const path = require('path');
 const fs = require('fs');
 const shell = remote.shell;
 const cp = require('child_process');
-const parse = require('parse-gitignore');
+const https = require('https');
 import gitConfig from './git/git-config';
+import { log } from 'core-js';
 
 export default class Utils {
     static openDir (cwd, relative) {
@@ -100,5 +101,28 @@ export default class Utils {
             ret.user = config.user;
         }
         return ret;
+    }
+
+    /**
+     * 获取ignore的类型
+     */
+    static fetchIgnoreTypes () {
+        let files = fs.readdirSync('./ignores');
+        files = files.map(file => {
+            return file.replace('.gitignore', '');
+        });
+        return files;
+    }
+
+    static createIngoreFile (type, dir) {
+        try {
+            fs.accessSync(`./ignores/${type}.gitignore`, fs.constants.F_OK);
+            // 存在该文件
+            const file = path.join(dir, '.gitignore');
+            const content = fs.readFileSync(`./ignores/${type}.gitignore`);
+            fs.writeFileSync(file, content);
+        } catch (e) {
+            console.log(e);
+        }
     }
 }

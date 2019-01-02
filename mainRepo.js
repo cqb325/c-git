@@ -6,7 +6,8 @@ const os = require('os');
 const {
     Repository,
     Branch,
-    Cred
+    Cred,
+    Clone
 } = Git;
 
 
@@ -103,6 +104,17 @@ async function setUpstream (params) {
 }
 
 /**
+ * 克隆
+ * @param {*} params 
+ */
+async function clone (params) {
+    await Clone(params.url, params.dir, {
+        checkoutBranch: 'master',
+        fetchOpts: fetchOptions()
+    });
+}
+
+/**
  * push commits
  */
 ipcMain.on('push', async (event, dir) => {
@@ -142,5 +154,15 @@ ipcMain.on('setUpstream', async (event, params) => {
         event.sender.send('setUpstream_res', null);
     } catch (e) {
         event.sender.send('setUpstream_res', e.message);
+    }
+});
+
+ipcMain.on('clone', async (event, params) => {
+    console.log('clone....');
+    try {
+        await clone(params);
+        event.sender.send('clone_res', null);
+    } catch (e) {
+        event.sender.send('clone_res', e.message);
     }
 });

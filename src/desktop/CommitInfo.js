@@ -16,38 +16,44 @@ const MenuItem = remote.MenuItem;
 class CommitInfo extends React.Component {
     displayName = 'CommitInfo';
 
+    componentWillUnmount () {
+        document.removeEventListener('contextmenu', this.contextMenu);
+    }
+
+    contextMenu = async (e) => {
+        e.preventDefault();
+        if (Dom.closest(e.target, '.commit-info-line')) {
+            let ele = Dom.closest(e.target, '.commit-info-line');
+            ele = Dom.dom(ele);
+            const menu = new SysMenu();
+            const {data} = this.props.commit;
+            const commit = data.commit;
+            menu.append(new MenuItem({label: 'Show Changes', click: () => {
+                const filePath = ele.data('path');
+                this.props.commit.getDiffText(filePath, commit.sha());
+            }}));
+            menu.append(new MenuItem({label: 'Open', click: () => {
+                const dir = ele.data('dir');
+                utils.openDir(this.props.repo.cwd, dir);
+            }}));
+            menu.append(new MenuItem({label: 'Log', click: () => {
+                const filePath = ele.data('path');
+                this.props.repo.setHistoryFile(filePath);
+            }}));
+            menu.append(new MenuItem({label: 'Copy Name', click: () => {
+                clipboard.writeText(ele.data('name'));
+            }}));
+            menu.append(new MenuItem({label: 'Copy Relative Path', click: () => {
+                clipboard.writeText(ele.data('dir'));
+            }}));
+            menu.popup(remote.getCurrentWindow());
+        }
+    }
+    
     componentDidMount () {
         this.props.commit.setCwd(this.props.repo.cwd);
 
-        document.addEventListener('contextmenu', (e) => {
-            e.preventDefault();
-            if (Dom.closest(e.target, '.commit-info-line')) {
-                let ele = Dom.closest(e.target, '.commit-info-line');
-                ele = Dom.dom(ele);
-                const menu = new SysMenu();
-                const {data} = this.props.commit;
-                const commit = data.commit;
-                menu.append(new MenuItem({label: 'Show Changes', click: () => {
-                    const filePath = ele.data('path');
-                    this.props.commit.getDiffText(filePath, commit.sha());
-                }}));
-                menu.append(new MenuItem({label: 'Open', click: () => {
-                    const dir = ele.data('dir');
-                    utils.openDir(this.props.repo.cwd, dir);
-                }}));
-                menu.append(new MenuItem({label: 'Log', click: () => {
-                    const filePath = ele.data('path');
-                    this.props.repo.setHistoryFile(filePath);
-                }}));
-                menu.append(new MenuItem({label: 'Copy Name', click: () => {
-                    clipboard.writeText(ele.data('name'));
-                }}));
-                menu.append(new MenuItem({label: 'Copy Relative Path', click: () => {
-                    clipboard.writeText(ele.data('dir'));
-                }}));
-                menu.popup(remote.getCurrentWindow());
-            }
-        });
+        document.addEventListener('contextmenu', this.contextMenu, false);
     }
 
     close = () => {

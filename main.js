@@ -1,7 +1,8 @@
 const electron = require('electron');
+const Configstore = require('configstore');
+const Git = require('nodegit');
 const { app, BrowserWindow, Menu, ipcMain, globalShortcut } = electron;
 let win;
-const Git = require('nodegit');
 require('./mainRepo');
 global.Git = Git;
 global.GitResetDefault = Git.Reset.default;
@@ -12,12 +13,42 @@ ipcMain.on('connection', (event) => {
     sender = event.sender;
 });
 
+const store = new Configstore('c-git');
+const items = [];
+let index = 1;
+for (const name in store.all) {
+    const item = store.all[name];
+    if (index > 5) {
+        break;
+    }
+    items.push({
+        id: `2${index}`,
+        lastOpenTime: item.lastOpenTime,
+        label: item.dir
+    });
+    index ++;
+}
+items.sort((a, b) => {
+    if (a.lastOpenTime === undefined) {
+        return 1;
+    }
+    if (b.lastOpenTime === undefined) {
+        return -1;
+    }
+    if (a.lastOpenTime > b.lastOpenTime) {
+        return -1;
+    }
+    if (a.lastOpenTime <= b.lastOpenTime) {
+        return 1;
+    }
+});
+
 const template = [
     {
         label: 'File',
         submenu: [
             { id: 1, label: 'open'},
-            { id: 2, label: 'open recent'},
+            { id: 2, label: 'open recent', submenu: items},
             { type: 'separator' },
             { id: 3, label: 'welcome',  click () {
                 sender.send('menu_welcome');

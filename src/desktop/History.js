@@ -33,53 +33,60 @@ class History extends React.Component {
         }
     }
 
+    componentWillUnmount () {
+        document.removeEventListener('contextmenu', this.contextMenu);
+    }
+
+    contextMenu = async (e) => {
+        e.preventDefault();
+        if (Dom.closest(e.target, 'td.commit')) {
+            let ele = Dom.closest(e.target, 'td.commit');
+            ele = Dom.dom(ele);
+            const menu = new SysMenu();
+            const parent = ele.parent();
+            const commitId = parent.data('commitid');
+            const commit = window.gragh.commitsTable[commitId];
+            console.log(commit.isLocal);
+            
+            menu.append(new MenuItem({label: 'Push Commits',
+                enabled: !!commit.isLocal && !commit.isSameNode,
+                click: () => {
+                    this.pushCommits();
+                }}));
+            menu.append(new MenuItem({label: 'Edit Commit Message',
+                enabled: !!commit.isLocal && !commit.isSameNode,
+                click: () => {
+                    this.openEditMessage(commit);
+                }}));
+            menu.append(new MenuItem({label: 'Edit Author',
+                enabled: !!commit.isLocal && !commit.isSameNode, click: () => {
+                
+                }}));
+            menu.append(new MenuItem({label: 'Add Branch', click: () => {
+                this.openAddBranchDialog();
+            }}));
+            menu.append(new MenuItem({label: 'Add Tag', click: () => {
+                this.openAddTagDialog(commitId);
+            }}));
+            menu.append(new MenuItem({label: 'Reset', click: () => {
+                this.openResetDialog(commitId);
+            }}));
+            menu.append(new MenuItem({label: 'Copy Message', click: async () => {
+                const commit = await this.props.history.getCommit(commitId);
+                clipboard.writeText(commit.message());
+            }}));
+                
+            menu.popup({window: remote.getCurrentWindow()});
+        }
+    }
+
     componentDidMount () {
         this.props.history.getHistory(this.props.repo.cwd, this.props.historyFile);
         if (this.props.bind) {
             this.props.bind(this);
         }
 
-        document.addEventListener('contextmenu', (e) => {
-            e.preventDefault();
-            if (Dom.closest(e.target, 'td.commit')) {
-                let ele = Dom.closest(e.target, 'td.commit');
-                ele = Dom.dom(ele);
-                const menu = new SysMenu();
-                const parent = ele.parent();
-                const commitId = parent.data('commitid');
-                const commit = window.gragh.commitsTable[commitId];
-                console.log(commit.isLocal);
-                
-                menu.append(new MenuItem({label: 'Push Commits',
-                    enabled: !!commit.isLocal && !commit.isSameNode,
-                    click: () => {
-                        this.pushCommits();
-                    }}));
-                menu.append(new MenuItem({label: 'Edit Commit Message',
-                    enabled: !!commit.isLocal && !commit.isSameNode,
-                    click: () => {
-                        this.openEditMessage(commit);
-                    }}));
-                menu.append(new MenuItem({label: 'Edit Author',
-                    enabled: !!commit.isLocal && !commit.isSameNode, click: () => {
-                    
-                    }}));
-                menu.append(new MenuItem({label: 'Add Branch', click: () => {
-                    this.openAddBranchDialog();
-                }}));
-                menu.append(new MenuItem({label: 'Add Tag', click: () => {
-                    this.openAddTagDialog(commitId);
-                }}));
-                menu.append(new MenuItem({label: 'Reset', click: () => {
-                    this.openResetDialog(commitId);
-                }}));
-                menu.append(new MenuItem({label: 'Copy Message', click: async () => {
-                    const commit = await this.props.history.getCommit(commitId);
-                    clipboard.writeText(commit.message());
-                }}));
-                menu.popup(remote.getCurrentWindow());
-            }
-        });
+        document.addEventListener('contextmenu', this.contextMenu, false);
     }
 
     async pushCommits () {

@@ -28,6 +28,45 @@ class FileTree extends React.Component {
         this.props.fileTree.getRepoTree(this.props.cwd);
     }
 
+    componentWillUnmount () {
+        document.removeEventListener('contextmenu', this.contextMenu);
+    }
+
+    contextMenu = async (e) => {
+        e.preventDefault();
+        if (Dom.closest(e.target, '.tree_cont')) {
+            let ele = Dom.closest(e.target, '.tree_cont');
+            ele = Dom.dom(ele);
+            const menu = new SysMenu();
+            menu.append(new MenuItem({label: 'Open in Explorer', click: () => {
+                const dir = ele.data('id');
+                utils.openDir('', dir);
+            }}));
+            menu.append(new MenuItem({label: 'Open in Terminal', click: () => {
+                const dir = ele.data('id');
+                utils.openTerminal(dir);
+            }}));
+            menu.append(new MenuItem({label: 'Pull', click: () => {
+                this.pull();
+            }}));
+            menu.append(new MenuItem({label: 'Refresh', click: () => {
+                this.props.fileTree.getRepoTree(this.props.cwd);
+            }}));
+            menu.append(new MenuItem({label: 'Ignore', click: async () => {
+                const dir = ele.data('id');
+                const dirName = utils.ignoreDirectory(this.props.cwd, dir);
+                if (dirName) {
+                    await this.props.fileTree.ignoreDir(dirName);
+                    await this.props.status.getStatus(this.props.cwd);
+                }
+            }})); 
+            menu.append(new MenuItem({label: 'Settings', click: () => {
+                console.log('Settings');
+            }}));
+            menu.popup(remote.getCurrentWindow());
+        }
+    }
+
     componentDidMount () {
         if (this.props.cwd) {
             this.refresh();
@@ -36,40 +75,7 @@ class FileTree extends React.Component {
             this.props.bind(this);
         }
 
-        document.addEventListener('contextmenu', (e) => {
-            e.preventDefault();
-            if (Dom.closest(e.target, '.tree_cont')) {
-                let ele = Dom.closest(e.target, '.tree_cont');
-                ele = Dom.dom(ele);
-                const menu = new SysMenu();
-                menu.append(new MenuItem({label: 'Open in Explorer', click: () => {
-                    const dir = ele.data('id');
-                    utils.openDir('', dir);
-                }}));
-                menu.append(new MenuItem({label: 'Open in Terminal', click: () => {
-                    const dir = ele.data('id');
-                    utils.openTerminal(dir);
-                }}));
-                menu.append(new MenuItem({label: 'Pull', click: () => {
-                    this.pull();
-                }}));
-                menu.append(new MenuItem({label: 'Refresh', click: () => {
-                    this.props.fileTree.getRepoTree(this.props.cwd);
-                }}));
-                menu.append(new MenuItem({label: 'Ignore', click: async () => {
-                    const dir = ele.data('id');
-                    const dirName = utils.ignoreDirectory(this.props.cwd, dir);
-                    if (dirName) {
-                        await this.props.fileTree.ignoreDir(dirName);
-                        await this.props.status.getStatus(this.props.cwd);
-                    }
-                }})); 
-                menu.append(new MenuItem({label: 'Settings', click: () => {
-                    console.log('Settings');
-                }}));
-                menu.popup(remote.getCurrentWindow());
-            }
-        });
+        document.addEventListener('contextmenu', this.contextMenu, false);
     }
 
     pull () {

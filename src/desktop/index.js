@@ -1,6 +1,7 @@
 import React from 'react';
 import Layout from 'r-cmui/components/Layout';
 import ResizeContent from 'r-cmui/components/Layout/ResizeContent';
+import Notification from 'r-cmui/components/Notification';
 import FileTree from './FileTree';
 import Branches from './Branches';
 import Status from './Status';
@@ -30,52 +31,59 @@ class Desktop extends React.Component {
     }
 
     onSelectRepo = (dir) => {
-        this.props.repo.setCurrentRepo(dir, (event, path) => {
-            console.log(event, path);
-            if (path.indexOf('.git\\') !== -1) {
+        try {
+            this.props.repo.setCurrentRepo(dir, (event, path) => {
+                if (path.indexOf('.git\\') !== -1) {
                 // stash change
-                if (path.indexOf('.git\\refs\\stash') !== -1 || path.indexOf('.git\\HEAD')) {
-                    if (this.branchesTimer) {
-                        clearTimeout(this.branchesTimer);
-                        this.branchesTimer = null;
+                    if (path.indexOf('.git\\refs\\stash') !== -1 || path.indexOf('.git\\HEAD')) {
+                        if (this.branchesTimer) {
+                            clearTimeout(this.branchesTimer);
+                            this.branchesTimer = null;
+                        }
+                        this.branchesTimer = setTimeout(() => {
+                            this.branchesTimer = null;
+                            this.branches.refresh();
+                        }, 300);
                     }
-                    this.branchesTimer = setTimeout(() => {
-                        this.branchesTimer = null;
-                        this.branches.refresh();
-                    }, 300);
-                }
-                if (path.indexOf('.git\\logs\\HEAD') !== -1) {
-                    if (this.historyTimer) {
-                        clearTimeout(this.historyTimer);
-                        this.historyTimer = null;
+                    if (path.indexOf('.git\\logs\\HEAD') !== -1) {
+                        if (this.historyTimer) {
+                            clearTimeout(this.historyTimer);
+                            this.historyTimer = null;
+                        }
+                        this.historyTimer = setTimeout(() => {
+                            this.historyTimer = null;
+                            this.history.refresh();
+                        }, 1000);
                     }
-                    this.historyTimer = setTimeout(() => {
-                        this.historyTimer = null;
-                        this.history.refresh();
-                    }, 1000);
-                }
-            } else {
+                } else {
                 // 创建删除目录
-                if (event === 'unlinkDir' || event === 'addDir' || path.indexOf('.gitignore') !== -1) {
-                    if (this.treeTimer) {
-                        clearTimeout(this.treeTimer);
-                        this.treeTimer = null;
+                    if (event === 'unlinkDir' || event === 'addDir' || path.indexOf('.gitignore') !== -1) {
+                        if (this.treeTimer) {
+                            clearTimeout(this.treeTimer);
+                            this.treeTimer = null;
+                        }
+                        this.treeTimer = setTimeout(() => {
+                            this.treeTimer = null;
+                            this.fileTree.refresh();
+                        }, 300);
                     }
-                    this.treeTimer = setTimeout(() => {
-                        this.treeTimer = null;
-                        this.fileTree.refresh();
+                    if (this.statusTimer) {
+                        clearTimeout(this.statusTimer);
+                        this.statusTimer = null;
+                    }
+                    this.statusTimer = setTimeout(() => {
+                        this.statusTimer = null;
+                        this.status.refresh();
                     }, 300);
                 }
-                if (this.statusTimer) {
-                    clearTimeout(this.statusTimer);
-                    this.statusTimer = null;
-                }
-                this.statusTimer = setTimeout(() => {
-                    this.statusTimer = null;
-                    this.status.refresh();
-                }, 300);
-            }
-        });
+            });
+        } catch (e) {
+            Notification.error({
+                title: 'error',
+                desc: e.message,
+                theme: 'danger'
+            });
+        }
     }
 
     componentDidMount () {
@@ -89,6 +97,7 @@ class Desktop extends React.Component {
     }
 
     openWelcome () {
+        this.props.repo.closeWatch();
         sessionStorage.setItem('current_repo_cwd', '');
         this.props.repo.setCwd('');
     }

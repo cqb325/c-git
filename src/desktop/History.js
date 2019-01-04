@@ -105,6 +105,10 @@ class History extends React.Component {
                     desc: err,
                     theme: 'danger'
                 });
+            } else {
+                if (this.props.parent) {
+                    this.props.parent.refreshHistory();
+                }
             }
         });
     }

@@ -51,16 +51,9 @@ class Desktop extends React.Component {
                         this.refreshBranches();
                     }
                     if (path.indexOf('.git\\logs\\HEAD') !== -1 || path.indexOf('.git\\HEAD') !== -1 || path.indexOf('.git\\FETCH_HEAD') !== -1) {
-                        if (this.historyTimer) {
-                            clearTimeout(this.historyTimer);
-                            this.historyTimer = null;
-                        }
-                        this.historyTimer = setTimeout(() => {
-                            this.historyTimer = null;
-                            this.history.refresh();
-
+                        this.refreshHistory(() => {
                             this.refreshStatus();
-                        }, 1000);
+                        });
                     }
                     if (event === 'unlink' && path.indexOf('.git\\index.lock') !== -1) {
                         this.refreshStatus();
@@ -80,6 +73,20 @@ class Desktop extends React.Component {
                 theme: 'danger'
             });
         }
+    }
+
+    refreshHistory (callback) {
+        if (this.historyTimer) {
+            clearTimeout(this.historyTimer);
+            this.historyTimer = null;
+        }
+        this.historyTimer = setTimeout(() => {
+            this.historyTimer = null;
+            this.history.refresh();
+            if (callback) {
+                callback();
+            }
+        }, 1000);
     }
 
     refreshBranches () {
@@ -394,7 +401,7 @@ class Desktop extends React.Component {
             <Content>
                 <Layout style={{flexDirection: 'row', flex: 1}}>
                     <ResizeContent style={{flex: 1}} direction='vertical' resizeable={false}>
-                        <History bind={this.bindHistory.bind(this)} historyFile={historyFile}/>
+                        <History bind={this.bindHistory.bind(this)} historyFile={historyFile} parent={this}/>
                     </ResizeContent>
                     <ResizeContent handlerSize={3} width={300} minWidth={300} direction='vertical' align='left' className='right-sider'>
                         <Status bind={this.bindStatus.bind(this)} onCommit={this.onCommit}/>

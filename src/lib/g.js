@@ -52,7 +52,7 @@ function GitGragh() {
         return t.parents && t.parents.length > 1
     }
 
-    function v(n) {
+    function render(n) {
         var b = t.svg,
             g = o(b),
             l = t.commitsList,
@@ -226,22 +226,20 @@ function GitGragh() {
     }
 
     function start(y) {
-        function A(t) {
-            if (t.branches && t.branches.length > 0)
-                for (var r = 0; r < t.branches.length; r++) {
-                    var branch = t.branches[r];
+        function isMasterBranch(commit) {
+            if (commit.branches && commit.branches.length > 0)
+                for (let r = 0; r < commit.branches.length; r++) {
+                    var branch = commit.branches[r];
                     if ("origin/master" === branch || "master" === branch || "HEAD" === branch || branch.startsWith("HEAD ")) {
                         return true;
                     }
                 }
-            return !1
+            return false;
         }
-        var i = t.commitsList;
+        var commitsList = t.commitsList;
         // var lines = y;// y.trim().split("\n");
         
         var commits = y.commits;
-        var localTime = y.localTime;
-        var remoteTime = y.remoteTime;
         n();
         var lastDate = '';
         var r;
@@ -250,7 +248,7 @@ function GitGragh() {
             if (line) {
                 var sha1 = line.sha(),
                     hasParents = typeof(line.parents) === 'function' ? line.parents() && line.parents().length : line.parents && line.parents.length,
-                    author = line.author(),
+                    author = line.author().name(),
                     date = new Date(line.date()).toLocaleString(),
                     msg = line.summary(),
                     table = jQuery("#git-gragh-tbl")[0],
@@ -280,7 +278,7 @@ function GitGragh() {
                     isLocal: line.isLocal,
                     isRemote: line.isRemote,
                     isSameNode: line.isSameNode,
-                    row: i.length,
+                    row: commitsList.length,
                     htmlElement: cell,
                     author: author,
                     date: date,
@@ -290,36 +288,48 @@ function GitGragh() {
                 };
 
                 var item = o;
-                i.push(item);
+                commitsList.push(item);
                 commitsTable[item.sha1] = item;
                 hasParents ? item.parents = typeof(line.parents) === 'function' ? line.parents().map((p) => {
                     return p.tostrS();
                 }) : line.parents : false;
-                if (line.tags) {
+                if (line.tags || line.branches) {
                     // var g = h(other.trim());
                     item.tags = line.tags;
-                    // item.branches = g[1];
+                    item.branches = line.branches;
                 }
             }
         }
-        for (r = 0; r < i.length; r++){
-            v(i[r]);
+        for (let r = 0; r < commitsList.length; r++){
+            // console.log(i[r]);
+            render(commitsList[r]);
         }
-        var c = void 0;
-        for (r = 0; r < i.length; r++)
-            if (o = i[r], A(o)) {
-                c = o;
-                break
+        let headCommit = void 0;
+        for (let r = 0; r < commitsList.length; r++){
+            let commit = commitsList[r]
+            if (commit && isMasterBranch(commit)) {
+                headCommit = commit;
+                break;
             }
-        for (c || (c = i[0]), r = 0; r < (c ? c.row : i.length); r++) o = i[r], o.col++, o.x = a + e * o.col, f(r, 0, c);
-        if (c) {
-            var p = c.plumb();
-            if (p)
-                for (r = p.row + 1; r < i.length; r++) o = i[r], 0 === o.col && (o.col++, o.x = a + e * o.col)
         }
-        for (r = 0; r < i.length; r++) i[r].plumb();
-        for (r = i.length - 1; r >= 0; r--) i[r].draw();
-        for (r = i.length - 1; r >= 0; r--) i[r].circle()
+        for (headCommit || (headCommit = commitsList[0]), r = 0; r < (headCommit ? headCommit.row : commitsList.length); r++){
+            o = commitsList[r], o.col++, o.x = a + e * o.col, f(r, 0, headCommit);
+        }
+        if (headCommit) {
+            var plumb = headCommit.plumb();
+            if (plumb){
+                for (r = plumb.row + 1; r < commitsList.length; r++){
+                    let commit = commitsList[r];
+                    if(0 === commit.col){
+                        commit.col++;
+                        commit.x = a + e * commit.col;
+                    }
+                }
+            }
+        }
+        for (let r = 0; r < commitsList.length; r++) commitsList[r].plumb();
+        for (let r = commitsList.length - 1; r >= 0; r--) commitsList[r].draw();
+        for (let r = commitsList.length - 1; r >= 0; r--) commitsList[r].circle()
     }
     var m = ["#dc4132", "#79c753", "#f7786b", "#fae03c", "#98ddde", "#9896a4", "#b08e6a", "#91a8d0", "#f7cac9"],
         e = 15,

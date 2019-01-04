@@ -177,7 +177,9 @@ class History extends React.Component {
     }
 
     onClick = (item) => {
-        this.props.commit.getCommitInfo(item.sha1);
+        if (item) {
+            this.props.commit.getCommitInfo(item.sha1);
+        }
     }
 
     openEditMessage (commit) {
@@ -273,8 +275,13 @@ class History extends React.Component {
             let tags = branchesData.filter(item => {
                 return item.ref === 'tags';
             });
+            let branches = branchesData.filter(item => {
+                return item.ref === 'local';
+            });
             tags = tags[0].children;
+            branches = branches[0].children;
             const tagMap = {};
+            const branchMap = {};
             if (tags) {
                 tags.forEach(tag => {
                     if (!tagMap[tag.id]) {
@@ -283,9 +290,23 @@ class History extends React.Component {
                     tagMap[tag.id].push(tag.name);
                 });
             }
+            if (branches) {
+                branches.forEach(branch => {
+                    if (!branchMap[branch.target]) {
+                        branchMap[branch.target] = [];
+                    }
+                    branchMap[branch.target].push(branch.name);
+                    if (branch.head) {
+                        branchMap[branch.target].push('HEAD');
+                    }
+                });
+            }
             data.commits.forEach(item => {
                 if (tagMap[item.sha()]) {
                     item.tags = tagMap[item.sha()];
+                }
+                if (branchMap[item.sha()]) {
+                    item.branches = branchMap[item.sha()];
                 }
             });
             setTimeout(() => {

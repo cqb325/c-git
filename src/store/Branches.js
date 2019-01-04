@@ -90,6 +90,14 @@ export default class Branches {
         await this.client.setUpstream(branchName, null);
     }
 
+    /**
+     * review 提交到gerrity等
+     * @param {*} branchName 
+     */
+    async review (branchName) {
+        return await this.client.review(branchName);
+    }
+
     @action
     setSelectedNode (nodeId) {
         this.selectedNode = nodeId;

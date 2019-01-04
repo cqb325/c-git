@@ -473,6 +473,18 @@ class GitClient {
         }
         return ret;
     }
+
+    async review (branchName) {
+        const repo = new GitRepo(this.dir, this.credentials);
+        let ret;
+        try {
+            await repo.open();
+            ret = await repo.review(branchName);
+        } finally {
+            repo.free();
+        }
+        return ret;
+    }
 }
 
 GitClient.GitRepo = GitRepo;

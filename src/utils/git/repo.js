@@ -375,25 +375,35 @@ class Repo {
      * @param {Object} options
      */
     async commit (message, paths, options) {
-        options = options || {};
+        // options = options || {};
 
-        let name = options.name || '';
-        let email = options.email || '';
+        // let name = options.name || '';
+        // let email = options.email || '';
 
-        if (!name || !email) {
-            const config = gitConfig(this.dir);
-            if (config.user) {
-                name = name || config.user.name;
-                email = email || config.user.email;
-            }
-        }
+        // if (!name || !email) {
+        //     const config = gitConfig(this.dir);
+        //     if (config.user) {
+        //         name = name || config.user.name;
+        //         email = email || config.user.email;
+        //     }
+        // }
 
-        const author = nodegit.Signature.now(name, email);
-        const committer = nodegit.Signature.now(name, email);
-        const commitId = await this.rawRepo.createCommitOnHead(paths, author, committer, message);
-        console.log(commitId);
-        // await this.rawRepo.createCommitOnHead([], author, author, message);
-        return commitId;
+        // const author = nodegit.Signature.now(name, email);
+        // const committer = nodegit.Signature.now(name, email);
+        // const commitId = await this.rawRepo.createCommitOnHead(paths, author, committer, message);
+        // console.log(commitId);
+        // // await this.rawRepo.createCommitOnHead([], author, author, message);
+        // return commitId;
+        const repo = simpleGit(this.dir);
+        await new Promise((resolve, reject) => {
+            repo.commit(message, paths, (err) => {
+                if (!err) {
+                    resolve();
+                } else {
+                    reject(err);
+                }
+            });
+        });
     }
 
     /**
@@ -417,19 +427,30 @@ class Repo {
      * @param {String} branchName
      */
     async checkout (branchName) {
-        const branchRef = `refs/heads/${branchName}`;
-        const refNames = await this.rawRepo.getReferenceNames(nodegit.Reference.TYPE.LISTALL);
+        // const branchRef = `refs/heads/${branchName}`;
+        // const refNames = await this.rawRepo.getReferenceNames(nodegit.Reference.TYPE.LISTALL);
 
-        // create if branch not exists
-        if (refNames.indexOf(branchRef) < 0) {
-            const remoteName = await this.getCurrentRemoteName();
-            const remoteBranchName = `${remoteName}/${branchName}`;
-            const refer = await this.rawRepo.getBranch(remoteBranchName);
-            const newRefer = await this.rawRepo.createBranch(branchName, refer.target());
-            await nodegit.Branch.setUpstream(newRefer, remoteBranchName);
-        }
+        // // create if branch not exists
+        // if (refNames.indexOf(branchRef) < 0) {
+        //     const remoteName = await this.getCurrentRemoteName();
+        //     const remoteBranchName = `${remoteName}/${branchName}`;
+        //     const refer = await this.rawRepo.getBranch(remoteBranchName);
+        //     const newRefer = await this.rawRepo.createBranch(branchName, refer.target());
+        //     await nodegit.Branch.setUpstream(newRefer, remoteBranchName);
+        // }
 
-        await this.rawRepo.checkoutBranch(branchRef);
+        // await this.rawRepo.checkoutBranch(branchRef);
+
+        const repo = simpleGit(this.dir);
+        return await new Promise((resolve, reject) => {
+            repo.checkout(branchName, (err) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve();
+                }
+            });
+        });
     }
 
     async hasBranchName (name) {
@@ -980,6 +1001,23 @@ class Repo {
         } catch (e) {
             return null;
         }
+    }
+
+    /**
+     * 执行review
+     * @param {*} branchName 
+     */
+    async review (branchName) {
+        const repo = simpleGit(this.dir);
+        return await new Promise((resolve, reject) => {
+            repo._run(['review', branchName], (err) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve();
+                }
+            });
+        });
     }
 
     istextfile ( filepath, length ) {

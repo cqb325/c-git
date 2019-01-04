@@ -12,10 +12,10 @@ export default class History {
         let data;
         if (filePath) {
             data = await this.client.getFileCommitHistory(filePath);
-            console.log(data);
         } else {
             data = await this.client.getCommitHistory();
         }
+        console.log(data);
         this.setData(data);
     }
 

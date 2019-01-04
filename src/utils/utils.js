@@ -178,4 +178,17 @@ export default class Utils {
         item.auth.password = params.password;
         store.set(item.name, item);
     }
+
+    /**
+     * 是否存在review
+     * @param {*} cwd 
+     */
+    static hasReview (cwd) {
+        try {
+            fs.accessSync(path.join(cwd, '.gitreview'));
+            return true;
+        } catch (e) {
+            return false;
+        }
+    }
 }

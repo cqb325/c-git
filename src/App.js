@@ -10,7 +10,10 @@ class App extends React.Component {
     displayName = 'App';
 
     componentDidMount () {
-        this.props.routing.push('/desktop');
+        const hash = window.location.hash;
+        if (hash !== '#/desktop') {
+            this.props.routing.push('/desktop');
+        }
     }
 
     render () {

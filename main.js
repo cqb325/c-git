@@ -24,10 +24,16 @@ for (const name in store.all) {
     items.push({
         id: `2${index}`,
         lastOpenTime: item.lastOpenTime,
-        label: item.dir
+        label: item.dir,
+        click: openRepo.bind(this, item)
     });
     index ++;
 }
+
+function openRepo (item) {
+    sender.send('open_repo', item);
+}
+
 items.sort((a, b) => {
     if (a.lastOpenTime === undefined) {
         return 1;
@@ -47,7 +53,15 @@ const template = [
     {
         label: 'File',
         submenu: [
-            { id: 1, label: 'open'},
+            { id: 1, label: 'open', click () {
+                sender.send('menu_open');
+            }},
+            { id: 4, label: 'create', click () {
+                sender.send('menu_create');
+            }},
+            { id: 5, label: 'clone', click () {
+                sender.send('menu_clone');
+            }},
             { id: 2, label: 'open recent', submenu: items},
             { type: 'separator' },
             { id: 3, label: 'welcome',  click () {
@@ -78,7 +92,7 @@ const template = [
         submenu: [
             {
                 label: 'about',
-                click () { }
+                click () { sender.send('menu_about'); }
             }
         ]
     }

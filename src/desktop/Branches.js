@@ -5,6 +5,7 @@ import MessageBox from 'r-cmui/components/MessageBox';
 import Notification from 'r-cmui/components/Notification';
 import AddBranch from './branch/AddBranch';
 import SetTrackedBranch from './branch/SetTrackedBranch';
+import utils from '../utils/utils';
 
 const {remote, clipboard, ipcRenderer} = require('electron');
 const SysMenu = remote.Menu;
@@ -35,6 +36,13 @@ class Branches extends React.Component {
             const type = ele.data('type');
 
             if (type === 'local') {
+                const hasReview = utils.hasReview(this.props.repo.cwd);
+                if (hasReview) {
+                    menu.append(new MenuItem({label: 'Review', click: () => {
+                        const name = ele.data('name');
+                        this.review(name);
+                    }}));
+                }
                 menu.append(new MenuItem({label: 'Check Out', click: () => {
                     const name = ele.data('name');
                     this.checkoutBranch(name, type);
@@ -131,6 +139,18 @@ class Branches extends React.Component {
         }
 
         document.addEventListener('contextmenu', this.contextMenu, false);
+    }
+
+    async review () {
+        try {
+            await this.props.branches.review(name);
+        } catch (e) {
+            Notification.error({
+                title: 'Review',
+                desc: e,
+                theme: 'danger'
+            });
+        }
     }
 
     async pushCommits () {

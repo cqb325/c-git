@@ -48,14 +48,7 @@ class Desktop extends React.Component {
                     console.log(event, path);
                     // stash change
                     if (path.indexOf('.git\\refs\\stash') !== -1 || path.indexOf('.git\\HEAD')) {
-                        if (this.branchesTimer) {
-                            clearTimeout(this.branchesTimer);
-                            this.branchesTimer = null;
-                        }
-                        this.branchesTimer = setTimeout(() => {
-                            this.branchesTimer = null;
-                            this.branches.refresh();
-                        }, 300);
+                        this.refreshBranches();
                     }
                     if (path.indexOf('.git\\logs\\HEAD') !== -1 || path.indexOf('.git\\HEAD') !== -1 || path.indexOf('.git\\FETCH_HEAD') !== -1) {
                         if (this.historyTimer) {
@@ -66,36 +59,18 @@ class Desktop extends React.Component {
                             this.historyTimer = null;
                             this.history.refresh();
 
-                            if (this.statusTimer) {
-                                clearTimeout(this.statusTimer);
-                                this.statusTimer = null;
-                            }
-                            this.statusTimer = setTimeout(() => {
-                                this.statusTimer = null;
-                                this.status.refresh();
-                            }, 300);
+                            this.refreshStatus();
                         }, 1000);
                     }
+                    if (event === 'unlink' && path.indexOf('.git\\index.lock') !== -1) {
+                        this.refreshStatus();
+                    }
                 } else {
-                // 创建删除目录
+                    // 创建删除目录
                     if (event === 'unlinkDir' || event === 'addDir' || path.indexOf('.gitignore') !== -1) {
-                        if (this.treeTimer) {
-                            clearTimeout(this.treeTimer);
-                            this.treeTimer = null;
-                        }
-                        this.treeTimer = setTimeout(() => {
-                            this.treeTimer = null;
-                            this.fileTree.refresh();
-                        }, 300);
+                        this.refreshFileTree();
                     }
-                    if (this.statusTimer) {
-                        clearTimeout(this.statusTimer);
-                        this.statusTimer = null;
-                    }
-                    this.statusTimer = setTimeout(() => {
-                        this.statusTimer = null;
-                        this.status.refresh();
-                    }, 300);
+                    this.refreshStatus();
                 }
             });
         } catch (e) {
@@ -105,6 +80,39 @@ class Desktop extends React.Component {
                 theme: 'danger'
             });
         }
+    }
+
+    refreshBranches () {
+        if (this.branchesTimer) {
+            clearTimeout(this.branchesTimer);
+            this.branchesTimer = null;
+        }
+        this.branchesTimer = setTimeout(() => {
+            this.branchesTimer = null;
+            this.branches.refresh();
+        }, 300);
+    }
+
+    refreshFileTree () {
+        if (this.treeTimer) {
+            clearTimeout(this.treeTimer);
+            this.treeTimer = null;
+        }
+        this.treeTimer = setTimeout(() => {
+            this.treeTimer = null;
+            this.fileTree.refresh();
+        }, 1000);
+    }
+
+    refreshStatus () {
+        if (this.statusTimer) {
+            clearTimeout(this.statusTimer);
+            this.statusTimer = null;
+        }
+        this.statusTimer = setTimeout(() => {
+            this.statusTimer = null;
+            this.status.refresh();
+        }, 300);
     }
 
     componentDidMount () {

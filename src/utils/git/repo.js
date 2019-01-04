@@ -289,8 +289,6 @@ class Repo {
      */
     async add (pathspec) {
         const index = await this.rawRepo.refreshIndex();
-        console.log(index.version());
-        // const index = await this.rawRepo.index();
         if (Array.isArray(pathspec)) {
             for (const file of pathspec) {
                 const fullpath = path.join(this.dir, file);
@@ -394,9 +392,12 @@ class Repo {
         // console.log(commitId);
         // // await this.rawRepo.createCommitOnHead([], author, author, message);
         // return commitId;
+
+        await this.add(paths);
         const repo = simpleGit(this.dir);
         await new Promise((resolve, reject) => {
-            repo.commit(message, paths, (err) => {
+            const command = ['commit', '-m', message, '-o', '--'].concat(paths);
+            repo._run(command, (err) => {
                 if (!err) {
                     resolve();
                 } else {

@@ -1,5 +1,7 @@
 const electron = require('electron');
 const Configstore = require('configstore');
+const url = require('url');
+const path = require('path');
 const Git = require('nodegit');
 const { app, BrowserWindow, Menu, ipcMain, globalShortcut } = electron;
 let win;

@@ -141,9 +141,14 @@ class Branches extends React.Component {
         document.addEventListener('contextmenu', this.contextMenu, false);
     }
 
-    async review () {
+    async review (name) {
         try {
-            await this.props.branches.review(name);
+            const info = await this.props.branches.review(name);
+            Notification.info({
+                title: 'Review',
+                desc: info,
+                theme: 'success'
+            });
         } catch (e) {
             Notification.error({
                 title: 'Review',
@@ -378,6 +383,7 @@ class Branches extends React.Component {
                     <span className='branches-arrow'></span>
                     {item.name}
                     {item.children && item.children.length ? `(${item.children.length})` : null}
+                    {item.url ? ` - ${item.url}` : ''}
                 </div>
                 {
                     item.children

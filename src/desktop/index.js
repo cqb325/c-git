@@ -388,9 +388,9 @@ class Desktop extends React.Component {
 
         return <Layout style={{flexDirection: 'row'}}>
             <DiffContent />
-            <ResizeContent handlerSize={3} minWidth={150} direction='vertical' align='right' className='left-sider'>
+            <ResizeContent handlerSize={1} minWidth={150} width={300} direction='vertical' align='right' className='left-sider'>
                 <Layout>
-                    <ResizeContent handlerSize={3} height={'50%'} align='bottom'>
+                    <ResizeContent handlerSize={1} height={'50%'} align='bottom'>
                         <FileTree cwd={cwd} bind={this.bindFileTree.bind(this)}/>
                     </ResizeContent>
                     <ResizeContent style={{flex: 1}} resizeable={false}>
@@ -403,7 +403,7 @@ class Desktop extends React.Component {
                     <ResizeContent style={{flex: 1}} direction='vertical' resizeable={false}>
                         <History bind={this.bindHistory.bind(this)} historyFile={historyFile} parent={this}/>
                     </ResizeContent>
-                    <ResizeContent handlerSize={3} width={300} minWidth={300} direction='vertical' align='left' className='right-sider'>
+                    <ResizeContent handlerSize={1} width={300} minWidth={300} direction='vertical' align='left' className='right-sider'>
                         <Status bind={this.bindStatus.bind(this)} onCommit={this.onCommit}/>
                         <CommitInfo/>
                     </ResizeContent>

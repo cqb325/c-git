@@ -31,7 +31,7 @@ export default class Branches {
         });
         origns && origns.forEach(origin => {
             data.push({
-                ref: `orign_${origin.name}`, type: 'remote', name: origin.name, children: map[origin.name]
+                ref: `orign_${origin.name}`, type: 'remote', name: origin.name, url: origin.url, children: map[origin.name]
             });
         });
         data.push({

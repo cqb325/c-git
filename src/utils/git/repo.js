@@ -1011,11 +1011,12 @@ class Repo {
     async review (branchName) {
         const repo = simpleGit(this.dir);
         return await new Promise((resolve, reject) => {
-            repo._run(['review', branchName], (err) => {
+            console.log(branchName);
+            repo._run(['review', branchName], (err, data) => {
                 if (err) {
                     reject(err);
                 } else {
-                    resolve();
+                    resolve(data);
                 }
             });
         });

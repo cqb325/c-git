@@ -108,7 +108,7 @@ function createWindow () {
     win = new BrowserWindow({
         width: 1500,
         height: 800,
-        icon: './src/images/logo.png',
+        icon: './src/images/logo.ico',
         webPreferences: {
             nodeIntegrationInWorker: true
         }

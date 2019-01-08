@@ -36,7 +36,7 @@ export default class Repo {
         }
     }
 
-    setCurrentRepo (cwd, callback) {
+    setCurrentRepo (cwd, callback, callback2) {
         try {
             fs.accessSync(cwd, fs.constants.F_OK);
             // 存在目录
@@ -77,6 +77,7 @@ export default class Repo {
             
 
             this.setCwd(cwd);
+            callback2 ? callback2() : false;
         }
     }
 

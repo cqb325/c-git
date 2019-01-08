@@ -15,7 +15,6 @@ export default class History {
         } else {
             data = await this.client.getCommitHistory();
         }
-        console.log(data);
         this.setData(data);
     }
 

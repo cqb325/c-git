@@ -15,93 +15,102 @@ ipcMain.on('connection', (event) => {
     sender = event.sender;
 });
 
-const store = new Configstore('c-git');
-const items = [];
-let index = 1;
-for (const name in store.all) {
-    const item = store.all[name];
-    if (index > 5) {
-        break;
-    }
-    items.push({
-        id: `2${index}`,
-        lastOpenTime: item.lastOpenTime,
-        label: item.dir,
-        click: openRepo.bind(this, item)
-    });
-    index ++;
-}
-
-function openRepo (item) {
-    sender.send('open_repo', item);
-}
-
-items.sort((a, b) => {
-    if (a.lastOpenTime === undefined) {
-        return 1;
-    }
-    if (b.lastOpenTime === undefined) {
-        return -1;
-    }
-    if (a.lastOpenTime > b.lastOpenTime) {
-        return -1;
-    }
-    if (a.lastOpenTime <= b.lastOpenTime) {
-        return 1;
-    }
+ipcMain.on('update_menu', () => {
+    createMenu();
 });
 
-const template = [
-    {
-        label: 'File',
-        submenu: [
-            { id: 1, label: 'open', click () {
-                sender.send('menu_open');
-            }},
-            { id: 4, label: 'create', click () {
-                sender.send('menu_create');
-            }},
-            { id: 5, label: 'clone', click () {
-                sender.send('menu_clone');
-            }},
-            { id: 2, label: 'open recent', submenu: items},
-            { type: 'separator' },
-            { id: 3, label: 'welcome',  click () {
-                sender.send('menu_welcome');
-            }},
-            { role: 'quit' }
-        ]
-    },
-    {
-        label: 'View',
-        submenu: [
-            { role: 'reload' },
-            { role: 'forcereload' },
-            { role: 'toggledevtools' },
-            { type: 'separator' },
-            { role: 'togglefullscreen' }
-        ]
-    },
-    {
-        role: 'window',
-        submenu: [
-            { role: 'minimize' },
-            { role: 'close' }
-        ]
-    },
-    {
-        role: 'help',
-        submenu: [
-            {
-                label: 'about',
-                click () { sender.send('menu_about'); }
-            }
-        ]
-    }
-];
+const store = new Configstore('c-git');
 
-const menu = Menu.buildFromTemplate(template);
-Menu.setApplicationMenu(menu);
+function createMenu () {
+    const items = [];
+    let index = 1;
+    for (const name in store.all) {
+        const item = store.all[name];
+        if (index > 5) {
+            break;
+        }
+        items.push({
+            id: `2${index}`,
+            lastOpenTime: item.lastOpenTime,
+            label: item.dir,
+            click: openRepo.bind(this, item)
+        });
+        index ++;
+    }
+    
+    function openRepo (item) {
+        sender.send('open_repo', item);
+    }
+    
+    items.sort((a, b) => {
+        if (a.lastOpenTime === undefined) {
+            return 1;
+        }
+        if (b.lastOpenTime === undefined) {
+            return -1;
+        }
+        if (a.lastOpenTime > b.lastOpenTime) {
+            return -1;
+        }
+        if (a.lastOpenTime <= b.lastOpenTime) {
+            return 1;
+        }
+    });
+    
+    const template = [
+        {
+            label: 'File',
+            submenu: [
+                { id: 1, label: 'open', click () {
+                    sender.send('menu_open');
+                }},
+                { id: 4, label: 'create', click () {
+                    sender.send('menu_create');
+                }},
+                { id: 5, label: 'clone', click () {
+                    sender.send('menu_clone');
+                }},
+                { id: 2, label: 'open recent', submenu: items},
+                { type: 'separator' },
+                { id: 3, label: 'welcome',  click () {
+                    sender.send('menu_welcome');
+                }},
+                { role: 'quit' }
+            ]
+        },
+        {
+            label: 'View',
+            submenu: [
+                { role: 'reload' },
+                { role: 'forcereload' },
+                { role: 'toggledevtools' },
+                { type: 'separator' },
+                { role: 'togglefullscreen' }
+            ]
+        },
+        {
+            role: 'window',
+            submenu: [
+                { role: 'minimize' },
+                { role: 'close' }
+            ]
+        },
+        {
+            role: 'help',
+            submenu: [
+                {
+                    label: 'about',
+                    click () { sender.send('menu_about'); }
+                }
+            ]
+        }
+    ];
+    
+    const menu = Menu.buildFromTemplate(template);
+    Menu.setApplicationMenu(menu);
+}
+
+createMenu();
 
 function createWindow () {
     // 创建一个窗口.

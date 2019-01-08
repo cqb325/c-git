@@ -41,7 +41,7 @@ class Desktop extends React.Component {
         this.props.repo.closeWatch();
     }
 
-    onSelectRepo = (dir) => {
+    onSelectRepo = (dir, callback) => {
         try {
             this.props.repo.setCurrentRepo(dir, (event, path) => {
                 if (path.indexOf('.git\\') !== -1) {
@@ -65,7 +65,7 @@ class Desktop extends React.Component {
                     }
                     this.refreshStatus();
                 }
-            });
+            }, callback);
         } catch (e) {
             Notification.error({
                 title: 'error',
@@ -128,6 +128,7 @@ class Desktop extends React.Component {
         });
         ipcRenderer.on('open_repo', (event, item) => {
             this.onSelectRepoItem(item);
+            ipcRenderer.send('update_menu');
         });
         ipcRenderer.on('menu_open', () => {
             this.openRepo();
@@ -170,7 +171,11 @@ class Desktop extends React.Component {
                     store.set(storeItem.name, storeItem);
 
                     sessionStorage.setItem('current_repo_cwd', filePaths[0]);
-                    this.onSelectRepo(filePaths[0]);
+                    this.onSelectRepo(filePaths[0], () => {
+                        this.refreshBranches();
+                        this.refreshHistory();
+                        this.refreshStatus();
+                    });
                 } else {
                     let desc = '';
                     if (ret === 'NOACCESS') {
@@ -204,7 +209,11 @@ class Desktop extends React.Component {
         store.set(item.name, item);
 
         sessionStorage.setItem('current_repo_cwd', item.dir);
-        this.onSelectRepo(item.dir);
+        this.onSelectRepo(item.dir, () => {
+            this.refreshBranches();
+            this.refreshHistory();
+            this.refreshStatus();
+        });
     }
 
     openWelcome () {

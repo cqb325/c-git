@@ -98,9 +98,7 @@ class FileTree extends React.Component {
 
     render () {
         const {data} = this.props.fileTree;
-        return <div>
-            <Tree key={UUID.v4()} data={toJS(data)} onSelect={this.onSelectDir}/>
-        </div>;
+        return <Tree key={this.props.cwd} data={toJS(data)} onSelect={this.onSelectDir}/>;
     }
 }
 

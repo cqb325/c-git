@@ -4,6 +4,9 @@ const fs = require('fs');
 const shell = remote.shell;
 const cp = require('child_process');
 const Configstore = require('configstore');
+const gitConfigPath = require('git-config-path');
+const parseConfig = require('parse-git-config').sync;
+const ini = require('ini');
 import gitConfig from './git/git-config';
 
 export default class Utils {
@@ -106,6 +109,31 @@ export default class Utils {
             ret.user = config.user;
         }
         return ret;
+    }
+
+    static getRepoConfig (dir) {
+        const config = gitConfig(dir);
+        const store = new Configstore('c-git');
+        const item = Utils.getItemByPath(store, dir);
+        config.author = item.auth;
+        return config;
+    }
+
+    static saveConfig (dir, params) {
+        const store = new Configstore('c-git');
+        const item = Utils.getItemByPath(store, dir);
+        item.auth.username = params.username;
+        item.auth.password = params.password;
+
+        store.set(item.name, item);
+
+        const configPath = gitConfigPath();
+        const cfg = parseConfig({cwd: '/', path: configPath});
+        cfg.user = {
+            name: params['user.name'],
+            email: params['user.name']
+        };
+        fs.writeFileSync(configPath, ini.stringify(cfg, {whitespace: true}));
     }
 
     /**

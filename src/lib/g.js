@@ -414,6 +414,9 @@ function render(l, ops) {
         r = document.getElementById("git-gragh-tbl");
     r = r.cloneNode(!0);
     jQuery('rect').remove();
+    if(ops.finished){
+        ops.finished();
+    }
 }
 
 function destroy() {

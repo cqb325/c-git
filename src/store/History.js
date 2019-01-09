@@ -3,6 +3,7 @@ import GitClient from '../utils/git';
 
 export default class History {
     @observable data = null;
+    @observable loading = false;
 
     async getHistory (cwd, filePath) {
         if (this.cwd !== cwd) {
@@ -10,6 +11,7 @@ export default class History {
             this.client = new GitClient(cwd);
         }
         let data;
+        this.startHistory();
         if (filePath) {
             data = await this.client.getFileCommitHistory(filePath);
         } else {
@@ -42,5 +44,15 @@ export default class History {
     @action
     setData (data) {
         this.data = data;
+    }
+
+    @action
+    startHistory () {
+        this.loading = true;
+    }
+
+    @action
+    endHistory () {
+        this.loading = false;
     }
 }

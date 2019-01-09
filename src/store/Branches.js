@@ -62,6 +62,10 @@ export default class Branches {
         }
     }
 
+    async pull () {
+        await this.client.pull();
+    }
+
     async checkoutBranch (name) {
         await this.client.checkout(name);
     }

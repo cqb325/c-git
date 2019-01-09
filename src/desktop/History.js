@@ -3,6 +3,7 @@ import dg, {adestroy} from '../lib/g';
 import Dom from 'r-cmui/components/utils/Dom';
 import Dialog from 'r-cmui/components/Dialog';
 import Notification from 'r-cmui/components/Notification';
+import Spin from 'r-cmui/components/Spin';
 import ResetContent from './history/ResetContent';
 import MessageContent from './history/MessageContent';
 import AddBranch from './branch/AddBranch';
@@ -10,6 +11,7 @@ import AddTag from './history/AddTag';
 import AuthContent from './history/AuthContent';
 import utils from '../utils/utils';
 
+const {SVGSpin} = Spin;
 const {remote, clipboard, ipcRenderer} = require('electron');
 const SysMenu = remote.Menu;
 const MenuItem = remote.MenuItem;
@@ -316,7 +318,10 @@ class History extends React.Component {
             setTimeout(() => {
                 if (data) {
                     dg(toJS(data), {
-                        onClick: this.onClick
+                        onClick: this.onClick,
+                        finished: () => {
+                            this.props.history.endHistory();
+                        }
                     });
                 }
             }, 200);
@@ -326,25 +331,28 @@ class History extends React.Component {
 
     render () {
         console.log('render history...');
+        const {loading} = this.props.history;
         return <div style={{height: '100%'}} className='history-graph'>
-            {
-                this.props.historyFile
-                    ? <div style={{height: 40, lineHeight: '40px', 
-                        padding: '0 20px', color: '#eee',
-                        borderBottom: '1px solid #aaa'}}>
-                        {this.props.historyFile}
-                        <span className='history-close pull-right' title='关闭' onClick={this.closeFileHistory}>x</span>
-                    </div>
-                    : null
-            }
-            <table width='100%'>
-                <tbody>
-                    <tr>
-                        <td width='100%' className='commits-content'></td>
-                    </tr>
-                </tbody>
-            </table>
-            {this.renderGragh()}
+            <SVGSpin spinning={loading} style={{height: '100%'}}>
+                {
+                    this.props.historyFile
+                        ? <div style={{height: 40, lineHeight: '40px', 
+                            padding: '0 20px', color: '#eee',
+                            borderBottom: '1px solid #aaa'}}>
+                            {this.props.historyFile}
+                            <span className='history-close pull-right' title='关闭' onClick={this.closeFileHistory}>x</span>
+                        </div>
+                        : null
+                }
+                <table width='100%'>
+                    <tbody>
+                        <tr>
+                            <td width='100%' className='commits-content'></td>
+                        </tr>
+                    </tbody>
+                </table>
+                {this.renderGragh()}
+            </SVGSpin>
 
             <Dialog title='Reset' 
                 ref={f => this.resetDialog = f}

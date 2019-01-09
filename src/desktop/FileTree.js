@@ -3,8 +3,9 @@ const path = require('path');
 import Tree from 'r-cmui/components/Tree';
 import Notification from 'r-cmui/components/Notification';
 import Dom from 'r-cmui/components/utils/Dom';
-import UUID from 'r-cmui/components/utils/UUID';
+import Dialog from 'r-cmui/components/Dialog';
 import utils from '../utils/utils';
+import SettingContent from './fileTree/SettingContent';
 
 const {remote, ipcRenderer} = require('electron');
 const SysMenu = remote.Menu;
@@ -61,7 +62,7 @@ class FileTree extends React.Component {
                 }
             }})); 
             menu.append(new MenuItem({label: 'Settings', click: () => {
-                console.log('Settings');
+                this.openSettingsDialig();
             }}));
             menu.popup(remote.getCurrentWindow());
         }
@@ -76,6 +77,48 @@ class FileTree extends React.Component {
         }
 
         document.addEventListener('contextmenu', this.contextMenu, false);
+    }
+
+    /**
+     * 设置dialog
+     */
+    openSettingsDialig () {
+        const config = this.props.fileTree.getConfig();
+        this.settingContent.setData(config);
+        this.settingDialog.open();
+    }
+
+    onSaveConfig = (flag) => {
+        if (flag) {
+            if (this.settingContent.isChange()) {
+                if (this.settingContent.isValid()) {
+                    this.settingDialog.showLoading();
+                    const params = this.settingContent.getValue();
+                    this.saveConfig(params);
+                }
+                return false;
+            } else {
+                return true;
+            }
+        }
+        return true;
+    }
+
+    async saveConfig (params) {
+        try {
+            await this.props.fileTree.saveConfig(params);
+        } catch (e) {
+            console.log(e);
+            
+            Notification.error({
+                title: 'Save Setting',
+                desc: e.message,
+                theme: 'danger'
+            });
+        } finally {
+            this.settingDialog.close();
+            this.settingDialog.hideLoading();
+        }
     }
 
     pull () {
@@ -98,7 +141,15 @@ class FileTree extends React.Component {
 
     render () {
         const {data} = this.props.fileTree;
-        return <Tree key={this.props.cwd} data={toJS(data)} onSelect={this.onSelectDir}/>;
+        return <div>
+            <Tree key={this.props.cwd} data={toJS(data)} onSelect={this.onSelectDir}/>
+            <Dialog title='Settings'
+                ref={f => this.settingDialog = f}
+                onConfirm={this.onSaveConfig}
+            >
+                <SettingContent ref={f => this.settingContent = f}/>
+            </Dialog>
+        </div>;
     }
 }
 

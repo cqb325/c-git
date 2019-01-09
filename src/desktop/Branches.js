@@ -47,6 +47,9 @@ class Branches extends React.Component {
                     const name = ele.data('name');
                     this.checkoutBranch(name, type);
                 }}));
+                menu.append(new MenuItem({label: 'Pull', click: () => {
+                    this.pull();
+                }}));
                 menu.append(new MenuItem({label: 'Push', click: () => {
                     this.pushCommits();
                 }}));
@@ -139,6 +142,20 @@ class Branches extends React.Component {
         }
 
         document.addEventListener('contextmenu', this.contextMenu, false);
+    }
+
+    pull () {
+        ipcRenderer.send('fetchAll', this.props.repo.cwd);
+        ipcRenderer.once('fetchAll_res', async (event, err) => {
+            if (err) {
+                Notification.error({
+                    title: 'fetch 错误',
+                    desc: err
+                });
+            } else {
+                await this.props.branches.pull();
+            }
+        });
     }
 
     async review (name) {

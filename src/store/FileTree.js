@@ -1,6 +1,7 @@
 import {observable, action} from 'mobx';
 import directoryTree from '../utils/directoryTree';
 import GitClient from '../utils/git';
+import utils from '../utils/utils';
 const ignored = require('ignored');
 const fs = require('fs');
 const path = require('path');
@@ -74,6 +75,15 @@ export default class FileTree {
 
     async pull () {
         await this.client.pull();
+    }
+
+    getConfig () {
+        const config = utils.getRepoConfig(this.cwd);
+        return config;
+    }
+
+    async saveConfig (params) {
+        await utils.saveConfig(this.cwd, params);
     }
 
     @action

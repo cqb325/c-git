@@ -131,7 +131,7 @@ export default class Utils {
         const cfg = parseConfig({cwd: '/', path: configPath});
         cfg.user = {
             name: params['user.name'],
-            email: params['user.name']
+            email: params['user.email']
         };
         fs.writeFileSync(configPath, ini.stringify(cfg, {whitespace: true}));
     }

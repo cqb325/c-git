@@ -116,6 +116,7 @@ export default class Utils {
         const store = new Configstore('c-git');
         const item = Utils.getItemByPath(store, dir);
         config.author = item.auth;
+        
         return config;
     }
 
@@ -127,8 +128,8 @@ export default class Utils {
 
         store.set(item.name, item);
 
-        const configPath = gitConfigPath();
-        const cfg = parseConfig({cwd: '/', path: configPath});
+        const configPath = gitConfigPath({cwd: dir});
+        const cfg = parseConfig({cwd: configPath, path: configPath});
         cfg.user = {
             name: params['user.name'],
             email: params['user.email']

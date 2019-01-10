@@ -21,6 +21,7 @@ export default class History {
     }
 
     async reset (id, type) {
+        this.startHistory();
         await this.client.resetToCommit(id, type);
         await this.getHistory(this.cwd);
     }
@@ -30,6 +31,7 @@ export default class History {
     }
 
     async push () {
+        this.startHistory();
         await this.client.push();
     }
 

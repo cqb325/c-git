@@ -13,6 +13,7 @@ import Welcome from './welcome';
 import CreateContent from './welcome/create';
 import CloneContent from './welcome/clone';
 import AboutContent from './welcome/about';
+import Head from './Head';
 import utils from '../utils/utils';
 const {remote, ipcRenderer} = require('electron');
 const Configstore = require('configstore');
@@ -383,7 +384,10 @@ class Desktop extends React.Component {
         const {cwd, historyFile} = this.props.repo;
         if (!cwd) {
             return <Layout>
-                <Welcome onSelectRepo={this.onSelectRepo} parent={this}/>
+                <Head />
+                <Content style={{height: 1}}>
+                    <Welcome onSelectRepo={this.onSelectRepo} parent={this}/>
+                </Content>
                 <Dialog ref={f => this.createDialog = f} title='Create Repository' 
                     content={<CreateContent ref={f => this.createContent = f}/>} onConfirm={this.onCreateRepo}/>
 
@@ -395,38 +399,43 @@ class Desktop extends React.Component {
             </Layout>;
         }
 
-        return <Layout style={{flexDirection: 'row'}}>
-            <DiffContent />
-            <ResizeContent handlerSize={1} minWidth={150} width={300} direction='vertical' align='right' className='left-sider'>
-                <Layout>
-                    <ResizeContent handlerSize={1} height={'50%'} align='bottom'>
-                        <FileTree cwd={cwd} bind={this.bindFileTree.bind(this)}/>
+        return <Layout>
+            <Head />
+            <Content style={{height: 1}}>
+                <Layout style={{flexDirection: 'row'}}>
+                    <DiffContent />
+                    <ResizeContent handlerSize={2} minWidth={150} width={300} direction='vertical' align='right' className='left-sider'>
+                        <Layout style={{background: '#252526'}}>
+                            <ResizeContent handlerSize={2} height={'50%'} align='bottom'>
+                                <FileTree cwd={cwd} bind={this.bindFileTree.bind(this)}/>
+                            </ResizeContent>
+                            <ResizeContent style={{flex: 1}} resizeable={false}>
+                                <Branches bind={this.bindBranches.bind(this)}/>
+                            </ResizeContent>
+                        </Layout>
                     </ResizeContent>
-                    <ResizeContent style={{flex: 1}} resizeable={false}>
-                        <Branches bind={this.bindBranches.bind(this)}/>
-                    </ResizeContent>
-                </Layout>
-            </ResizeContent>
-            <Content>
-                <Layout style={{flexDirection: 'row', flex: 1}}>
-                    <ResizeContent style={{flex: 1}} direction='vertical' resizeable={false}>
-                        <History bind={this.bindHistory.bind(this)} historyFile={historyFile} parent={this}/>
-                    </ResizeContent>
-                    <ResizeContent handlerSize={1} width={300} minWidth={300} direction='vertical' align='left' className='right-sider'>
-                        <Status bind={this.bindStatus.bind(this)} onCommit={this.onCommit}/>
-                        <CommitInfo/>
-                    </ResizeContent>
+                    <Content>
+                        <Layout style={{flexDirection: 'row', flex: 1, background: '#1E1E1E'}}>
+                            <ResizeContent style={{flex: 1}} direction='vertical' resizeable={false}>
+                                <History bind={this.bindHistory.bind(this)} historyFile={historyFile} parent={this}/>
+                            </ResizeContent>
+                            <ResizeContent handlerSize={2} width={300} minWidth={300} direction='vertical' align='left' className='right-sider'>
+                                <Status bind={this.bindStatus.bind(this)} onCommit={this.onCommit}/>
+                                <CommitInfo/>
+                            </ResizeContent>
+                        </Layout>
+                    </Content>
+
+                    <Dialog ref={f => this.createDialog = f} title='Create Repository' 
+                        content={<CreateContent ref={f => this.createContent = f}/>} onConfirm={this.onCreateRepo}/>
+
+                    <Dialog ref={f => this.cloneDialog = f} title='Clone Repository' 
+                        content={<CloneContent ref={f => this.cloneContent = f}/>} onConfirm={this.onCloneRepo}/>
+
+                    <Dialog ref={f => this.aboutDialog = f} title='About C-Git' useDefaultFooters={false}
+                        content={<AboutContent />}/>
                 </Layout>
             </Content>
-
-            <Dialog ref={f => this.createDialog = f} title='Create Repository' 
-                content={<CreateContent ref={f => this.createContent = f}/>} onConfirm={this.onCreateRepo}/>
-
-            <Dialog ref={f => this.cloneDialog = f} title='Clone Repository' 
-                content={<CloneContent ref={f => this.cloneContent = f}/>} onConfirm={this.onCloneRepo}/>
-
-            <Dialog ref={f => this.aboutDialog = f} title='About C-Git' useDefaultFooters={false}
-                content={<AboutContent />}/>
         </Layout>;
     }
 }

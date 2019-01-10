@@ -332,7 +332,7 @@ class Status extends React.Component {
                     data-path={state.path}
                     onClick={this.onClick.bind(this, state, index)}
                 >
-                    <td title={state.path}>{state.name}</td>
+                    <td title={state.path}><div>{state.name}</div></td>
                     <td className={`${type} ${sta}`}>{label}</td>
                 </tr>;
             });

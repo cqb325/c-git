@@ -151,11 +151,11 @@ class Welcome extends React.Component {
         const data = this.getRepoList();
         return (
             <Layout style={{flexDirection: 'row'}}>
-                <Sider width={500}>
+                <Sider width={500} style={{background: '#313641'}}>
                     <List data={data} actions={[<Button className='delete-repo-btn' key='delete' theme='danger' 
                         icon='trash' title='Delete Repository' onClick={this.openConfirm}/>]}/>
                 </Sider>
-                <Content>
+                <Content style={{background: '#252526'}}>
                     <div className='mt-45 text-center'>
                         <img src={logo} style={{width: 64}}/>
                         <div>C-GIT</div>

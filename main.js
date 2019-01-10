@@ -19,6 +19,28 @@ ipcMain.on('update_menu', () => {
     createMenu();
 });
 
+ipcMain.on('win-minimize', () => {
+    if (win) {
+        win.minimize();
+    }
+});
+
+ipcMain.on('win-maximize', () => {
+    if (win) {
+        if (win.isMaximized()) {
+            win.unmaximize();
+        } else {
+            win.maximize();
+        }
+    }
+});
+
+ipcMain.on('win-close', () => {
+    if (win) {
+        win.close();
+    }
+});
+
 const store = new Configstore('c-git');
 
 function createMenu () {
@@ -120,7 +142,9 @@ function createWindow () {
         icon: './src/images/logo.ico',
         webPreferences: {
             nodeIntegrationInWorker: true
-        }
+        },
+        frame: false,
+        backgroundColor: '#333'
     });
 
     // 然后加载应用的 index.html。

@@ -956,6 +956,7 @@ class Repo {
             });
         }
         let buf = await diff.toBuf(nodegit.Diff.FORMAT.PATCH);
+        buf = buf.replace(/%/g, '%25');
         buf = decodeURI(buf.replace(/\\\d{3}/g, (a) => {
             const num = a.substr(1);
             let code = Number(parseInt(num, 8)).toString(16);

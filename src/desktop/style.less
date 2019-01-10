@@ -1,5 +1,5 @@
 .left-sider{
-    border-right: 1px solid #007ACC;
+    background: #252526;
 }
 .branches-node{
     height: 25px;
@@ -50,8 +50,7 @@
     }
 }
 .status-wrap{
-    background: #313641;
-    border-left: 1px solid #007ACC;
+    background: #1E1E1E;
 }
 .status-table{
     user-select: none;
@@ -85,6 +84,11 @@
             &.NEW{
                 color: #87EA39;
             }
+        }
+        div{
+            width: 100%;
+            white-space: nowrap;
+            overflow: hidden;
         }
     }
 }
@@ -124,7 +128,7 @@
 
 
 
-#git-gragh-tbl, #git-gragh-tbl * { line-height: 1.0; font-family: monospace; border-spacing: 0; margin:0; border: 0; padding: 0; font-size: 13px;}
+#git-gragh-tbl, #git-gragh-tbl * { line-height: 1.0; border-spacing: 0; margin:0; border: 0; padding: 0; font-size: 13px;}
 #git-gragh-tbl { margin-top: 12px; }
 #git-gragh-tbl span.icon { font-family: "Atlassian Icons"; font-size: 16px; padding-left: 2px; }
 #git-gragh-tbl td.d { font-style: italic; color: #FCA454; padding-left: 0.7em; white-space: nowrap; }
@@ -212,10 +216,10 @@ circle.remoteCommit{
     position: fixed;
     left: 0;
     right: 0;
-    top: 0;
+    top: 35px;
     bottom: 0;
     z-index: 1000;
-    background: #313641;
+    background: #252526;
 }
 .diff-title{
     height: 35px;
@@ -234,7 +238,7 @@ circle.remoteCommit{
     color: #eee;
 }
 .d2h-file-diff{
-    background: #333;
+    background: #252526;
 }
 .d2h-info,
 .d2h-code-linenumber,
@@ -266,4 +270,29 @@ circle.remoteCommit{
 .diff-close{
     cursor: pointer;
     padding: 0 5px;
+}
+
+.frame-tools{
+    overflow: hidden;
+    list-style: none;
+    display: flex;
+}
+.frame-tool-item{
+    display: inline-block;
+    width: 46px;
+    height: 32px;
+    cursor: default;
+    -webkit-app-region: no-drag;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: background-color 0.1s ease 0s;
+    &:hover{
+        background-color: rgba(255, 255, 255, 0.13);
+    }
+    &.frame-tool-close{
+        &:hover{
+            background-color: rgba(232, 17, 35, 0.9);
+        }
+    }
 }

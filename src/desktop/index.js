@@ -379,12 +379,38 @@ class Desktop extends React.Component {
         this.aboutDialog.open();
     }
 
+    onCommand = (command, data) => {
+        if (command === 'open') {
+            this.openRepo();
+        }
+        if (command === 'create') {
+            this.openCreateDialog();
+        }
+        if (command === 'clone') {
+            this.openCloneDialog();
+        }
+        if (command === 'welcome') {
+            this.openWelcome();
+        }
+        if (command === 'exit') {
+            ipcRenderer.send('win-close');
+        }
+        if (command === 'open_repo') {
+            this.onSelectRepoItem(data);
+            this.head.updateRecents();
+        }
+        if (command === 'about') {
+            this.openAboutDialog();
+        }
+    }
+
     render () {
         console.log('render index...');
         const {cwd, historyFile} = this.props.repo;
+        const head = <Head onCommand={this.onCommand} ref={f => this.head = f}/>;
         if (!cwd) {
             return <Layout>
-                <Head />
+                {head}
                 <Content style={{height: 1}}>
                     <Welcome onSelectRepo={this.onSelectRepo} parent={this}/>
                 </Content>
@@ -400,7 +426,7 @@ class Desktop extends React.Component {
         }
 
         return <Layout>
-            <Head />
+            {head}
             <Content style={{height: 1}}>
                 <Layout style={{flexDirection: 'row'}}>
                     <DiffContent />

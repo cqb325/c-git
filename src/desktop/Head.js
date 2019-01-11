@@ -1,14 +1,26 @@
 import React from 'react';
 import Layout from 'r-cmui/components/Layout';
+import Menu from 'r-cmui/components/Menu';
+import FontIcon from 'r-cmui/components/FontIcon';
 const {Header} = Layout;
+const {SubMenu} = Menu;
 import logo from '../images/logo.png';
 import min from '../images/min.svg';
 import max from '../images/max.svg';
 import close from '../images/close.svg';
 const {ipcRenderer} = require('electron');
+const Configstore = require('configstore');
+const store = new Configstore('c-git');
 
 class Head extends React.Component {
     displayName = 'Head';
+
+    constructor (props) {
+        super(props);
+        this.state = {
+            recents: this.getRecents()
+        };
+    }
 
     onMinimize = () => {
         ipcRenderer.send('win-minimize');
@@ -22,11 +34,86 @@ class Head extends React.Component {
         ipcRenderer.send('win-close');
     }
 
-    render () {
-        return <Header style={{height: 35, padding: '0 0 0 15px', lineHeight: '35px', background: '#333333', userSelect: 'none', '-webkitAppRegion': 'drag'}}>
-            <img style={{width: 22, height: 22, marginTop: 6.5}} src={logo}/>
-            <span style={{position: 'relative', top: -4.5, height: 35, marginLeft: 15, textShadow: '0 0 5px #9a8585'}}>C-GIT</span>
+    onSelect = (item) => {
+        if (item.props.command) {
+            if (this.props.onCommand) {
+                this.props.onCommand(item.props.command, item.props.data);
+            }
+        }
+        item.unSelect();
+    }
 
+    getRecents () {
+        const items = [];
+        let index = 1;
+        for (const name in store.all) {
+            const item = store.all[name];
+            if (index > 10) {
+                break;
+            }
+            items.push({
+                id: `${item.name}_${item.dir}`,
+                lastOpenTime: item.lastOpenTime,
+                label: item.dir,
+                data: item
+            });
+            index ++;
+        }
+        
+        items.sort((a, b) => {
+            if (a.lastOpenTime === undefined) {
+                return 1;
+            }
+            if (b.lastOpenTime === undefined) {
+                return -1;
+            }
+            if (a.lastOpenTime > b.lastOpenTime) {
+                return -1;
+            }
+            if (a.lastOpenTime <= b.lastOpenTime) {
+                return 1;
+            }
+        });
+
+        return items;
+    }
+
+    renderRecentRepos () {
+        const items = this.state.recents;
+        return items.map(item => {
+            return <Menu.Item key={item.id} command='open_repo' data={item.data}>{item.label}</Menu.Item>;
+        });
+    }
+
+    updateRecents () {
+        const items = this.getRecents();
+        this.setState({
+            recents: items
+        });
+    }
+
+    render () {
+        return <Header style={{height: 35, padding: '0 0 0 15px', lineHeight: '35px', background: '#333333', userSelect: 'none', '-webkitAppRegion': 'drag', textAlign: 'center'}}>
+            <img style={{width: 22, height: 22, marginTop: 6.5}} src={logo} className='pull-left'/>
+            <Menu className='pull-left' theme='dark' ref={f => this.menu = f}
+                style={{'-webkitAppRegion': 'no-drag', display: 'inline-block', marginLeft: 15, textAlign: 'left'}}
+                layout='horizontal' onSelect={this.onSelect}>
+                <SubMenu title='file'>
+                    <Menu.Item command='open'><FontIcon icon='folder-open-o'/>Open</Menu.Item>
+                    <Menu.Item command='create'><FontIcon icon='plus-square-o'/>Create</Menu.Item>
+                    <Menu.Item command='clone'><FontIcon icon='clone'/>Clone</Menu.Item>
+                    <SubMenu title={<span><FontIcon icon='' style={{marginRight: 20}}/>Open Recent</span>}>
+                        {this.renderRecentRepos()}
+                    </SubMenu>
+                    <Menu.Divider/>
+                    <Menu.Item command='welcome'><FontIcon icon='' style={{marginRight: 20}}/>Welcome</Menu.Item>
+                    <Menu.Item command='exit'><FontIcon icon='stop-circle-o'/>Exit</Menu.Item>
+                </SubMenu>
+                <SubMenu title='help'>
+                    <Menu.Item command='about'>About</Menu.Item>
+                </SubMenu>
+            </Menu>
+            <span style={{height: 35, marginLeft: 15, textShadow: '0 0 5px #9a8585'}}>C-GIT</span>
             <ul className='pull-right frame-tools'>
                 <li className='frame-tool-item' title='minimize' onClick={this.onMinimize}>
                     <img src={min}/>

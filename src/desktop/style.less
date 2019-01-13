@@ -1,6 +1,29 @@
 .left-sider{
     background: #252526;
 }
+.cm-accordion-item-head{
+    padding: 5px 20px !important;
+}
+.cm-accordion-item-body{
+    padding: 12px 0!important;
+}
+.cm-accordion-item,
+.cm-accordion-item-active .cm-accordion-item-head{
+    background: rgb(51, 51, 51);
+}
+.cm-accordion-item-body{
+    background: #1E1E1E!important;
+}
+.branches-icon{
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    position: relative;
+    background: url(../images/git-branch.svg);
+    background-position: center center;
+    top: 3px;
+    margin-right: 5px;
+}
 .branches-node{
     height: 25px;
     line-height: 25px;
@@ -18,7 +41,7 @@
     transition: transform .25s linear;
 }
 .branches-sub-node{
-    padding-left: 30px;
+    padding-left: 20px;
     cursor: pointer;
     height: 25px;
     line-height: 25px;
@@ -27,19 +50,23 @@
     &.active{
         font-weight: bold;
         .branches-arrow-node{
-            display: inline-block;
+            background-image: url('../images/checked.svg')!important;
+        }
+    }
+    &:hover{
+        .branches-arrow-node{
+            background-image: url('../images/eye.svg');
         }
     }
 }
 .branches-arrow-node{
-    display: none;
-    width: 16px;
-    height: 16px;
+    width: 14px;
+    height: 14px;
+    display: inline-block;
     vertical-align: middle;
-    background-image: url('../images/ic_swap-right.svg');
     background-size: 100% 100%;
     margin-top: -2px;
-    margin-right: 3px;
+    margin-right: 4px;
 }
 .branches-group.active{
     .branches-node{

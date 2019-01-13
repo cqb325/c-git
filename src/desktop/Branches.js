@@ -3,6 +3,7 @@ import Dom from 'r-cmui/components/utils/Dom';
 import Dialog from 'r-cmui/components/Dialog';
 import MessageBox from 'r-cmui/components/MessageBox';
 import Notification from 'r-cmui/components/Notification';
+import Accordion from 'r-cmui/components/Accordion';
 import AddBranch from './branch/AddBranch';
 import SetTrackedBranch from './branch/SetTrackedBranch';
 import utils from '../utils/utils';
@@ -413,7 +414,7 @@ class Branches extends React.Component {
 
     render () {
         console.log('render branches...');
-        return <div style={{padding: '0 10px'}}>
+        return <div style={{padding: 0}}>
             {this.renderModules()}
 
             {
@@ -436,6 +437,27 @@ class Branches extends React.Component {
                     />
                     : null
             }
+
+            <Accordion>
+                <Accordion.Item title='LOCAL' icon='desktop' suffix={<span style={{fontSize: 11, color: '#8080AD'}}>2</span>} open>
+                    <div className={'branches-sub-node'}>
+                        <span className='branches-arrow-node'></span>
+                        <span className='branches-icon'></span>
+                        <span>master</span>
+                    </div>
+                    <div className={'branches-sub-node'}>
+                        <span className='branches-arrow-node'></span>
+                        <span className='branches-icon'></span>
+                        <span>develop</span>
+                    </div>
+                </Accordion.Item>
+                <Accordion.Item title='REMOTE' icon='cloud' suffix={7}>
+                </Accordion.Item>
+                <Accordion.Item title='TAGS' icon='tag'>
+                </Accordion.Item>
+                <Accordion.Item title='STASHES' icon='hdd-o'>
+                </Accordion.Item>
+            </Accordion>
 
             <MessageBox ref={f => this.deleteConfirm = f} type='confirm' confirm={this.deleteBranch}/>
             <MessageBox ref={f => this.stopConfirm = f} type='confirm' confirm={this.stopTracking}/>

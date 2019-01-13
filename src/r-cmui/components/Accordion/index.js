@@ -161,7 +161,7 @@ class Item extends BaseComponent {
     }
 
     render () {
-        let {className, style, icon, title, children} = this.props;
+        let {className, style, icon, title, children, suffix} = this.props;
 
         className = classNames('cm-accordion-item', className, {
             'cm-accordion-item-active': this.state.active
@@ -169,7 +169,10 @@ class Item extends BaseComponent {
         icon = icon ? <FontIcon className='cm-accordion-item-icon' icon={icon} /> : null;
         return (
             <li className={className} style={style}>
-                <div className='cm-accordion-item-head' onClick={this.onClick}>{icon}{title}</div>
+                <div className='cm-accordion-item-head' onClick={this.onClick}>
+                    <span>{icon}{title}</span>
+                    <span className='pull-right'>{suffix}</span>
+                </div>
                 <div className='cm-accordion-item-body' ref='body'>
                     {children}
                 </div>
@@ -266,9 +269,9 @@ class Accordion extends BaseComponent {
      * @param item
      */
     onOpen (item) {
-        if (this.lastOpenItem) {
-            this.lastOpenItem.collapse();
-        }
+        // if (this.lastOpenItem) {
+        //     this.lastOpenItem.collapse();
+        // }
         this.lastOpenItem = item;
 
         if (this.props.onOpen) {

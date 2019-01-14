@@ -278,14 +278,8 @@ class History extends React.Component {
         const branchesData = this.props.branches.data;
         if (branchesData && data) {
             data = toJS(data);
-            let tags = branchesData.filter(item => {
-                return item.ref === 'tags';
-            });
-            let branches = branchesData.filter(item => {
-                return item.ref === 'local';
-            });
-            tags = tags[0].children;
-            branches = branches[0].children;
+            const tags = branchesData.tags;
+            const branches = branchesData.branches;
             const tagMap = {};
             const branchMap = {};
             if (tags) {

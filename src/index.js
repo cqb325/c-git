@@ -8,6 +8,7 @@ import stores from './store/index';
 import {AppRoute} from './routers';
 import 'r-cmui/styles/theme.less';
 import 'r-cmui/styles/font-awesome.min.css';
+import './fonts/material-design-iconic-font/css/material-design-iconic-font.min.css';
 window.RCMUI_LANG = 'us_en';
 const browserHistory = createHashHistory();
 

@@ -19,13 +19,12 @@ class Comp extends React.Component {
 
     render () {
         const {data} = this.props;
-        const remotes = toJS(data).filter(item => {
-            return item.type === 'remote';
-        });
+        const remotes = toJS(data).remotes;
         let refs = [];
-        remotes.forEach(item => {
-            refs = refs.concat(item.children);
-        });
+        for (const name in remotes) {
+            const remote = remotes[name];
+            refs = refs.concat(remote);
+        }
         refs.forEach(item => {
             item.text = `${item.remote}/${item.name}`;
         });

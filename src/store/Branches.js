@@ -5,23 +5,22 @@ export default class Branches {
     @observable selectedSubNode = null;
     @observable data = null;
 
-    async getOrigns (cwd) {
+    async getOrigns (brancheData, cwd) {
         if (this.cwd !== cwd) {
             this.cwd = cwd;
             this.client = new GitClient(cwd);
         }
-        const origns = await this.client.getRemotes();
-        const brancheData = await this.client.getBranches();
+        // const origns = await this.client.getRemotes();
+        // const brancheData = await this.client.getBranches();
         brancheData.branches.forEach(branche => {
             if (branche.head) {
                 this.setSelectedSubNode(branche.ref);
             }
         });
-        const data = [];
-        data.push({
-            ref: 'local', name: 'Local Branches', type: 'local', children: brancheData.branches
-        });
-        this.setSelectedNode('local');
+        // const data = [];
+        // data.push({
+        //     ref: 'local', name: 'Local Branches', type: 'local', children: brancheData.branches
+        // });
         const map = {};
         brancheData.remotes.forEach(remote => {
             if (!map[remote.remote]) {
@@ -29,20 +28,21 @@ export default class Branches {
             }
             map[remote.remote].push(remote);
         });
-        origns && origns.forEach(origin => {
-            data.push({
-                ref: `orign_${origin.name}`, type: 'remote', name: origin.name, url: origin.url, children: map[origin.name]
-            });
-        });
-        data.push({
-            ref: 'tags', name: 'Tags', type: 'tag', children: brancheData.tags
-        });
-        if (brancheData.stashes && brancheData.stashes.length) {
-            data.push({
-                ref: 'stashes', name: 'Stashes', type: 'stash', children: brancheData.stashes
-            });
-        }
-        this.setData(data);
+        brancheData.remotes = map;
+        // origns && origns.forEach(origin => {
+        //     data.push({
+        //         ref: `orign_${origin.name}`, type: 'remote', name: origin.name, url: origin.url, children: map[origin.name]
+        //     });
+        // });
+        // data.push({
+        //     ref: 'tags', name: 'Tags', type: 'tag', children: brancheData.tags
+        // });
+        // if (brancheData.stashes && brancheData.stashes.length) {
+        //     data.push({
+        //         ref: 'stashes', name: 'Stashes', type: 'stash', children: brancheData.stashes
+        //     });
+        // }
+        this.setData(brancheData);
     }
 
     /**

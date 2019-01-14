@@ -432,7 +432,7 @@ class Desktop extends React.Component {
                     <DiffContent />
                     <ResizeContent handlerSize={2} minWidth={150} width={300} direction='vertical' align='right' className='left-sider'>
                         <Layout style={{background: '#252526'}}>
-                            <ResizeContent handlerSize={2} height={'50%'} align='bottom'>
+                            <ResizeContent handlerSize={2} height={'40%'} align='bottom'>
                                 <FileTree cwd={cwd} bind={this.bindFileTree.bind(this)}/>
                             </ResizeContent>
                             <ResizeContent style={{flex: 1}} resizeable={false}>

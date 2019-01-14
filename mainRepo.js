@@ -8,10 +8,13 @@ const {
     Repository,
     Branch,
     Cred,
-    Clone
+    Clone,
+    Reference,
+    Graph,
+    AnnotatedCommit,
+    Stash
 } = Git;
 const store = new Configstore('c-git');
-
 
 async function open (dir) {
     const repo = await Repository.open(dir);
@@ -139,6 +142,141 @@ async function clone (params) {
     });
 }
 
+async function getBranches (dir) {
+    let repo = await open(dir);
+    const refs = await repo.getReferences(Reference.TYPE.OID);
+    const branches = [];
+    const remotes = [];
+    const tags = [];
+
+    for (const ref of refs) {
+        if (ref.isBranch()) {
+            let remote, remoteOffset = 0;
+            let localOffset = 0;
+            const localCommit = await getBranchHeadCommit(repo, ref);
+            try {
+                remote = await Branch.upstream(ref);
+                const remoteCommit = await getBranchHeadCommit(repo, remote);
+                const aheadBehind = await Graph.aheadBehind(repo, localCommit.sha(), remoteCommit.sha());
+                localOffset = aheadBehind.ahead;
+                remoteOffset = aheadBehind.behind;
+            } catch (e) { e; }
+
+            branches.push({
+                ref: ref.name(),
+                name: ref.shorthand(),
+                head: !!ref.isHead(),
+                localOffset,
+                remoteOffset,
+                remote: remote ? remote.shorthand().replace(`/${ref.shorthand()}`, '') : '',
+                target: ref.target().toString()
+            });
+            branches.sort((a, b) => {
+                return a.name <= b.name;
+            });
+        }
+        if (ref.isRemote()) {
+            const shorthand = ref.shorthand();
+            let names = shorthand.split('/');
+            const remote = names[0];
+            names.splice(0, 1);
+            names = names.join('/');
+            remotes.push({
+                ref: ref.name(),
+                remote,
+                name: names,
+                head: !!ref.isHead(),
+                target: ref.target().toString()
+            });
+            remotes.sort((a, b) => {
+                return a.name <= b.name;
+            });
+        }
+        if (ref.isTag()) {
+            const hash = await AnnotatedCommit.fromRevspec(repo, ref.name());
+            const commit = await repo.getCommit(hash.id());
+            tags.push({
+                ref: ref.name(),
+                name: ref.shorthand(),
+                id: commit.sha(),
+                target: ref.target().toString(),
+                date: commit.date(),
+                author: {
+                    name: commit.author().name(),
+                    email: commit.author().email()
+                },
+                committer: commit.committer(),
+                message: commit.summary()
+            });
+            tags.sort((a, b) => {
+                return a.name <= b.name;
+            });
+        }
+    }
+
+    const stashes = [];
+    await Stash.foreach(repo, (index, message, oid) => {
+        stashes.push({index, message, oid});
+    });
+    for (const i in stashes) {
+        const stash = stashes[i];
+        const commit = await repo.getCommit(stash.oid);
+        stash.ref = new Date(commit.date()).toLocaleString();
+        stash.name = `${new Date(commit.date()).toLocaleString()}`;
+        stash.date = commit.date();
+        stash.author = {
+            name: commit.author().name(),
+            email: commit.author().email()
+        };
+        stash.committer = commit.committer();
+    }
+    stashes.sort((a, b) => {
+        return a.name <= b.name;
+    });
+
+    repo.free();
+    repo = null;
+    
+    return {
+        branches,
+        remotes,
+        tags,
+        stashes
+    };
+}
+
+async function getBranchHeadCommit (repo, ref) {
+    const commit = await repo.getReferenceCommit(ref.name());
+    return commit;
+}
+
+/**
+ * ahead behind
+ * @param {*} dir 
+ * @param {*} refName 
+ */
+async function getAheadBehind (dir, refName) {
+    let repo = await open(dir);
+    const ref = await repo.getReference(refName);
+
+    const localCommit = await getBranchHeadCommit(repo, ref);
+    try {
+        const remote = await Branch.upstream(ref);
+        const remoteCommit = await getBranchHeadCommit(repo, remote);
+        const aheadBehind = await Graph.aheadBehind(repo, localCommit.sha(), remoteCommit.sha());
+        return aheadBehind;
+    } catch (e) {
+        e;
+    }
+    const aheadBehind = {
+        ahead: 0,
+        behind: 0
+    };
+    repo.free();
+    repo = null;
+    return aheadBehind;
+}
+
 /**
  * push commits
  */
@@ -189,5 +327,25 @@ ipcMain.on('clone', async (event, params) => {
         event.sender.send('clone_res', null);
     } catch (e) {
         event.sender.send('clone_res', e.message);
+    }
+});
+
+ipcMain.on('getBranches', async (event, dir) => {
+    console.log('getBranches....');
+    try {
+        const data = await getBranches(dir);
+        event.sender.send('getBranches_res', null, data);
+    } catch (e) {
+        event.sender.send('getBranches_res', e.message, null);
+    }
+});
+
+ipcMain.on('getAheadBehind', async (event, dir, refName) => {
+    console.log('getAheadBehind....');
+    try {
+        const data = await getAheadBehind(dir, refName);
+        event.sender.send('getAheadBehind_res', null, data);
+    } catch (e) {
+        event.sender.send('getAheadBehind_res', e.message, null);
     }
 });

@@ -1,4 +1,4 @@
-const {remote} = require('electron');
+const {remote, ipcRenderer} = require('electron');
 const os = require('os');
 const path = require('path');
 const fs = require('fs');
@@ -482,7 +482,7 @@ class Repo {
             options.flags = Status.OPT.INCLUDE_UNTRACKED;
         }
         const list = [];
-        await Status.foreach(this.rawRepo, (filePath, sta) => {
+        await Status.foreach(this.rawRepo, async (filePath, sta) => {
             const name = path.basename(filePath);
             const map = {
                 1: 'INDEX_NEW',
@@ -503,6 +503,14 @@ class Repo {
                 status
             });
         });
+
+        const length = list.length;
+        for (let i = length - 1; i >= 0; i--) {
+            const isIgnored = await Ignore.pathIsIgnored(this.rawRepo, list[i].path);
+            if (isIgnored) {
+                list.splice(i, 1);
+            }
+        }
 
         return list;
     }
@@ -654,48 +662,36 @@ class Repo {
                     item.circleLocal = true;
                 });
             } else {
-                const ret = await this.getCommitOffset(ref, upstream);
-                // 本地的比较新
-                // if (headCommit.time() >= upHeadCommit.time()) {
-                //     rets = await this.getBranchCommitHistory(ref);
-                // } else {
-                //     rets = await this.getBranchCommitHistory(upstream);
-                //     console.log(rets.length);
-                // }
-                const sameCommit = ret.sameCommit;
-                const localCommits = ret.localCommits;
-                for (const i in localCommits) {
-                    const co = localCommits[i];
-                    if (co.sha() !== sameCommit) {
-                        co.isLocal = true;
-                    } else {
-                        break;
-                    }
+                // const ret = await this.getCommitOffset(ref, upstream);
+                const aheadbehind = await this.getAheadBehind(ref);
+                const commits = await this.getBranchCommitHistory(ref);
+                let upCommits;
+                let unpushs;
+                let stageCommits;
+                if (aheadbehind.ahead) {
+                    const same = commits[aheadbehind.ahead];
+                    same.isLocal = true;
+                    same.isSameNode = true;
+                    unpushs = commits.slice(0, aheadbehind.ahead);
+                    unpushs.forEach(item => {
+                        item.isLocal = true;
+                    });
+                    stageCommits = commits.slice(aheadbehind.ahead);
+                    console.log(stageCommits[0].sha());
+                } else {
+                    unpushs = [];
+                    stageCommits = commits;
                 }
-                const remoteCommits = ret.remoteCommits;
-                for (const i in remoteCommits) {
-                    const co = remoteCommits[i];
-                    if (co.sha() !== sameCommit) {
-                        co.isRemote = true;
-                    } else {
-                        break;
-                    }
+                if (aheadbehind.behind) {
+                    upCommits = await this.getBranchCommitHistory(upstream, aheadbehind.behind);
+                    upCommits.forEach(item => {
+                        item.isRemote = true;
+                    });
+                } else {
+                    upCommits = [];
                 }
 
-                rets = localCommits.concat(remoteCommits);
-                const map = {};
-                rets = rets.filter(item => {
-                    if (item.sha() === sameCommit) {
-                        item.isLocal = true;
-                        item.isSameNode = true;
-                    }
-                    if (map[item.sha()]) {
-                        return false;
-                    } else {
-                        map[item.sha()] = item;
-                        return true;
-                    }
-                });
+                rets = unpushs.concat(upCommits);
 
                 rets.sort((a, b) => {
                     if (a.time() < b.time()) {
@@ -706,15 +702,8 @@ class Repo {
                     }
                     return 0;
                 });
-                
-                // rets.forEach(item => {
-                //     if (localMap[item.sha()]) {
-                //         item.isLocal = true;
-                //     }
-                //     if (remoteMap[item.sha()]) {
-                //         item.isRemote = true;
-                //     }
-                // });
+
+                rets = rets.concat(stageCommits);
             }
         } else {
             rets = await this.getBranchCommitHistory(ref);
@@ -731,6 +720,20 @@ class Repo {
             localTime,
             remoteTime
         };
+    }
+
+    async getAheadBehind (ref) {
+        const aheadbehind = await new Promise((resolve, reject) => {
+            ipcRenderer.send('getAheadBehind', this.dir, ref.name());
+            ipcRenderer.once('getAheadBehind_res', (event, err, data) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve(data);
+                }
+            });
+        });
+        return aheadbehind;
     }
 
     async getFileCommitHistory (historyFile) {
@@ -759,13 +762,13 @@ class Repo {
      * 获取分支的提交历史
      * @param {*} ref 
      */
-    async getBranchCommitHistory (ref) {
+    async getBranchCommitHistory (ref, num) {
         const commit = await this.getBranchHeadCommit(ref);
         if (commit) {
             const walker = this.rawRepo.createRevWalk();
             walker.push(commit.sha());
             walker.sorting(Revwalk.SORT.Time);
-            const commits = await walker.getCommits(200);
+            const commits = await walker.getCommits(num || 200);
             return commits;
         }
         return null;

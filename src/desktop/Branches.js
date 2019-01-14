@@ -21,14 +21,33 @@ import { toJS } from 'mobx';
 class Branches extends React.Component {
     displayName = 'Branches';
 
-    refresh () {
-        this.props.branches.getOrigns(this.props.repo.cwd);
+    async refresh () {
+        try {
+            const data = await new Promise((resolve, reject) => {
+                ipcRenderer.send('getBranches', this.props.repo.cwd);
+                ipcRenderer.once('getBranches_res', (event, err, data) => {
+                    if (err) {
+                        reject(err);
+                    } else {
+                        resolve(data);
+                    }
+                });
+            });
+            this.props.branches.getOrigns(data, this.props.repo.cwd);
+        } catch (e) {
+            console.log(e);
+            Notification.error({
+                title: '获取分支错误',
+                desc: e.message,
+                theme: 'danger'
+            });
+        }
     }
 
     contextMenu = async (e) => {
         e.preventDefault();
         let menu;
-        if (Dom.closest(e.target, '.branches-group') || Dom.closest(e.target, '.branches-sub-node')) {
+        if (Dom.closest(e.target, '.cm-accordion-item-head') || Dom.closest(e.target, '.branches-sub-node')) {
             menu = new SysMenu();
         }
         if (Dom.closest(e.target, '.branches-sub-node')) {
@@ -106,8 +125,8 @@ class Branches extends React.Component {
                 }}));
             }
         }
-        if (Dom.closest(e.target, '.branches-group') && !Dom.closest(e.target, '.branches-sub-node')) {
-            let ele = Dom.closest(e.target, '.branches-group');
+        if (Dom.closest(e.target, '.cm-accordion-item-head') && !Dom.closest(e.target, '.branches-sub-node')) {
+            let ele = Dom.closest(e.target, '.cm-accordion-item-head');
             ele = Dom.dom(ele);
             const type = ele.data('type');
             if (type === 'local') {
@@ -126,7 +145,7 @@ class Branches extends React.Component {
                 }}));
             }
         }
-        if (Dom.closest(e.target, '.branches-group') || Dom.closest(e.target, '.branches-sub-node')) {
+        if (Dom.closest(e.target, '.cm-accordion-item-head') || Dom.closest(e.target, '.branches-sub-node')) {
             menu.popup({window: remote.getCurrentWindow()});
         }
     }
@@ -151,7 +170,8 @@ class Branches extends React.Component {
             if (err) {
                 Notification.error({
                     title: 'fetch 错误',
-                    desc: err
+                    desc: err,
+                    theme: 'danger'
                 });
             } else {
                 await this.props.branches.pull();
@@ -383,40 +403,179 @@ class Branches extends React.Component {
 
     getTitle (node, type) {
         if (type === 'stash') {
-            return `Date: ${node.ref}\nMessage: ${node.message}\nAuthor: ${node.author.name()}\nEmail: ${node.author.email()}`;
+            return `Date: ${node.ref}\nMessage: ${node.message}\nAuthor: ${node.author.name}\nEmail: ${node.author.email}`;
         } else if (type === 'tag') {
-            return `Date: ${node.date}\nMessage: ${node.message}\nAuthor: ${node.author.name()}\nEmail: ${node.author.email()}`;
+            return `Date: ${node.date}\nMessage: ${node.message}\nAuthor: ${node.author.name}\nEmail: ${node.author.email}`;
         }
     }
 
     renderModules () {
-        const {selectedNode, data} = this.props.branches;
+        const {data} = this.props.branches;
         if (!data) {
             return null;
         }
-        return toJS(data).map(item => {
-            const active = item.ref === selectedNode;
-            return <div key={item.ref} data-type={item.type} className={`branches-group ${active ? 'active' : ''}`}>
-                <div className='branches-node' onClick={this.onSelectNode.bind(this, item)}>
-                    <span className='branches-arrow'></span>
-                    {item.name}
-                    {item.children && item.children.length ? `(${item.children.length})` : null}
-                    {item.url ? ` - ${item.url}` : ''}
+        // return toJS(data).map(item => {
+        //     const title = item.ref === '';
+        //     return <div key={item.ref} data-type={item.type} className={`branches-group ${active ? 'active' : ''}`}>
+        //         <div className='branches-node' onClick={this.onSelectNode.bind(this, item)}>
+        //             <span className='branches-arrow'></span>
+        //             {item.name}
+        //             {item.children && item.children.length ? `(${item.children.length})` : null}
+        //             {item.url ? ` - ${item.url}` : ''}
+        //         </div>
+        //         {
+        //             item.children
+        //                 ? <div style={{display: active ? 'block' : 'none'}}>{this.renderSubNodes(item.children, item.type)}</div>
+        //                 : null
+        //         }
+        //     </div>;
+        // });
+        const branchData = toJS(data);
+        const ret = [];
+        const local = this.renderLocal(branchData.branches);
+        const remotes = this.renderRemotes(branchData.remotes);
+        ret.push(local);
+        ret.push(remotes);
+        if (branchData.tags && branchData.tags.length) {
+            const tags = this.renderTags(branchData.tags);
+            ret.push(tags);
+        }
+        if (branchData.stashes && branchData.stashes.length) {
+            const stashes = this.renderStashes(branchData.stashes);
+            ret.push(stashes);
+        }
+        return ret;
+    }
+
+    renderLocal (branches) {
+        const {selectedSubNode} = this.props.branches;
+        return <Accordion.Item key='LOCAL' title='LOCAL' icon='desktop' dataType='local' suffix={<span style={{fontSize: 11, color: '#8080AD'}}>{branches.length}</span>} open>
+            {
+                branches.map(branch => {
+                    const active = branch.ref === selectedSubNode;
+                    return <div key={branch.ref}>
+                        <div className={`branches-sub-node ${active ? 'active' : ''}`}
+                            data-type='local'
+                            data-ref={branch.ref}
+                            data-name={branch.name}
+                            data-index={branch.index}
+                            data-remote={branch.remote}
+                        >
+                            <span className='branches-arrow-node'></span>
+                            <span className='branches-icon'></span>
+                            <span>{branch.name}</span>
+                            <span className='pull-right mr-10' style={{fontSize: 9, fontWeight: 400}}>
+                                {
+                                    branch.localOffset
+                                        ? <span>
+                                            <span style={{marginRight: 2, color: '#8080AD'}}>{branch.localOffset}</span>
+                                            <i className='zmdi zmdi-arrow-right-top mr-5' style={{color: '#8080AD'}}></i>
+                                        </span>
+                                        : null
+                                }
+                                {
+                                    branch.remoteOffset
+                                        ? <span>
+                                            <i className='zmdi zmdi-arrow-left-bottom' style={{color: '#E9C341'}}></i>
+                                            <span style={{marginLeft: 2, color: '#E9C341'}}>{branch.remoteOffset}</span>
+                                        </span>
+                                        : null
+                                }
+                                
+                            </span>
+                        </div>
+                    </div>;
+                })
+            }
+        </Accordion.Item>;
+    }
+
+    renderRemotes (remotes) {
+        let length = 0;
+        const arr = [];
+        for (const name in remotes) {
+            length += remotes[name].length;
+            const remote = remotes[name];
+            const remoteEle = <div key={name} className={'remote-node'}>
+                <div className={'remote-node-title'}>
+                    <span className='branches-arrow-node'></span>
+                    <span className='remote-icon branches-icon'></span>
+                    <span>{name}</span>
                 </div>
+
                 {
-                    item.children
-                        ? <div style={{display: active ? 'block' : 'none'}}>{this.renderSubNodes(item.children, item.type)}</div>
-                        : null
+                    remote.map(item => {
+                        return <div key={item.ref} className={'branches-sub-node'}
+                            data-type='remote'
+                            data-ref={item.ref}
+                            data-name={item.name}
+                            data-index={item.index}
+                            data-remote={item.remote}
+                        >
+                            <span className='branches-arrow-node'></span>
+                            <span className='branches-icon'></span>
+                            <span>{item.name}</span>
+                        </div>;
+                    })
                 }
             </div>;
-        });
+            arr.push(remoteEle);
+        }
+        return <Accordion.Item key='REMOTE' title='REMOTE' icon='cloud' suffix={<span style={{fontSize: 11, color: '#8080AD'}}>{length}</span>} open>
+            {arr}
+        </Accordion.Item>;
+    }
+
+    renderTags (tags) {
+        return <Accordion.Item key='TAGS' title='TAGS' icon='tag' suffix={<span style={{fontSize: 11, color: '#8080AD'}}>{tags.length}</span>} open>
+            {
+                tags.map(tag => {
+                    const tip = this.getTitle (tag, 'tag');
+                    return <div key={tag.ref} title={tip}>
+                        <div className={'branches-sub-node'}
+                            data-type='tag'
+                            data-ref={tag.ref}
+                            data-name={tag.name}
+                            data-index={tag.index}
+                            data-remote={tag.remote}
+                        >
+                            <span className='branches-arrow-node'></span>
+                            <span className='branches-icon'></span>
+                            <span>{tag.name}</span>
+                        </div>
+                    </div>;
+                })
+            }
+        </Accordion.Item>;
+    }
+
+    renderStashes (stashes) {
+        return <Accordion.Item key='STASHES' title='STASHES' data-type='stash' icon='hdd-o' suffix={<span style={{fontSize: 11, color: '#8080AD'}}>{stashes.length}</span>} open>
+            {
+                stashes.map(stash => {
+                    const tip = this.getTitle (stash, 'tag');
+                    return <div key={stash.ref} title={tip}>
+                        <div className={'branches-sub-node'}
+                            data-type='stash'
+                            data-ref={stash.ref}
+                            data-name={stash.name}
+                            data-index={stash.index}
+                            data-remote={stash.remote}
+                        >
+                            <span className='branches-arrow-node'></span>
+                            <span className='branches-icon'></span>
+                            <span>{stash.name}</span>
+                        </div>
+                    </div>;
+                })
+            }
+        </Accordion.Item>;
     }
 
     render () {
         console.log('render branches...');
         return <div style={{padding: 0}}>
-            {this.renderModules()}
-
+            <Accordion>{this.renderModules()}</Accordion>
             {
                 this.props.branches.data
                     ? <Dialog ref={f => this.addBranchDialog = f}
@@ -437,27 +596,6 @@ class Branches extends React.Component {
                     />
                     : null
             }
-
-            <Accordion>
-                <Accordion.Item title='LOCAL' icon='desktop' suffix={<span style={{fontSize: 11, color: '#8080AD'}}>2</span>} open>
-                    <div className={'branches-sub-node'}>
-                        <span className='branches-arrow-node'></span>
-                        <span className='branches-icon'></span>
-                        <span>master</span>
-                    </div>
-                    <div className={'branches-sub-node'}>
-                        <span className='branches-arrow-node'></span>
-                        <span className='branches-icon'></span>
-                        <span>develop</span>
-                    </div>
-                </Accordion.Item>
-                <Accordion.Item title='REMOTE' icon='cloud' suffix={7}>
-                </Accordion.Item>
-                <Accordion.Item title='TAGS' icon='tag'>
-                </Accordion.Item>
-                <Accordion.Item title='STASHES' icon='hdd-o'>
-                </Accordion.Item>
-            </Accordion>
 
             <MessageBox ref={f => this.deleteConfirm = f} type='confirm' confirm={this.deleteBranch}/>
             <MessageBox ref={f => this.stopConfirm = f} type='confirm' confirm={this.stopTracking}/>

@@ -800,7 +800,7 @@ class Repo {
             data.commits = data.commits.concat(commits);
             this.getBranchCommitHistoryUtilSha(nextSha, endSha, data);
         } else {
-            data.commits = data.commits.concat(next);
+            data.commits = data.commits.concat(commits).concat(next);
         }
     }
 

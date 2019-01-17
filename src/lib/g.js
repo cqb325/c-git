@@ -563,7 +563,6 @@ function GitGragh() {
         n();
         var lastDate = '';
         var r;
-        let start = new Date().getTime();
         for (var j = 0; j < commits.length; j++) {
             var line = commits[j];
             if (line) {
@@ -630,7 +629,6 @@ function GitGragh() {
                 // }
             }
         }
-        console.log(new Date().getTime() - start);
         for (let r = 0; r < commitsList.length; r++){
             addGraphFunctions(commitsList[r]);
         }

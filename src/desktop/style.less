@@ -347,3 +347,51 @@ circle.remoteCommit{
 .dark.cm-menu{
     background: transparent!important;
 }
+
+.c-tag{
+    padding: 1px 5px 2px;
+    line-height: 18px;
+    color: #eee;
+    margin-top: 3px;
+    border-radius: 2px;
+    font-size: 11px;
+    box-sizing: border-box;
+    max-width: 100px;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    padding-right: 18px;
+}
+  .c-tag:hover{
+    text-overflow: initial;
+    overflow: visible;
+    max-width: initial;
+  }
+  .c-tag-branch::after,
+  .c-tag-tag::after{
+    display: inline-block;
+    position: absolute;
+    right: 4px;
+    top: 6px;
+    font: normal normal normal 14px/1 'FontAwesome';
+    font-size: inherit;
+    text-rendering: auto;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  .c-tag-tag::after{
+    content: "\F02B";
+  }
+  .c-tag-branch{
+    padding-right: 23px;
+  }
+  .c-tag-branch::after{
+    content: "\F26C";
+    font-size: 10px;
+    top: 5px;
+  }
+  .c-tag-branch.c-tag-remote::after{
+    content: "\F05B";
+    font-size: 10px;
+    top: 5px;
+  }

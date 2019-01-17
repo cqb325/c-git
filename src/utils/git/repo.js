@@ -711,8 +711,7 @@ class Repo {
                         const same = lostCommits[0];
                         same.isLocal = true;
                         same.isSameNode = true;
-                        storeCommit[0].isLocal = false;
-                        storeCommit[0].isSameNode = false;
+                        storeCommit.shift();
                         stageCommits = lostCommits.concat(storeCommit);
                         store.set(key, JSON.stringify(stageCommits));
                     }
@@ -795,10 +794,13 @@ class Repo {
         walker.push(startSha);
         walker.sorting(Revwalk.SORT.Time);
         const commits = await walker.getCommits(2);
-        const nextSha = commits.pop().sha();
+        const next = commits.pop();
+        const nextSha = next.sha();
         if (nextSha !== endSha) {
             data.commits = data.commits.concat(commits);
             this.getBranchCommitHistoryUtilSha(nextSha, endSha, data);
+        } else {
+            data.commits = data.commits.concat(next);
         }
     }
 

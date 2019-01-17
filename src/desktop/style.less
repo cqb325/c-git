@@ -193,19 +193,10 @@
 #git-gragh-tbl td.author { padding: 6px 1px; white-space: nowrap; color: darkgray; font-style: italic;}
 
 circle:hover, rect:hover + circle, circle.commitHover {
-    r: 4;
-    fill: #C517B6;
-    stroke: #C517B6;
-    stroke-width: 3;
+    r: 8;
 }
 circle.remoteCommit{
-    r: 6;
-    fill: #aaa;
     stroke: #aaa;
-    // stroke-width: 3;
-    &.commitHover{
-        r: 4;
-    }
 }
 
 #git-gragh-tbl tr.selected,
@@ -361,6 +352,7 @@ circle.remoteCommit{
     white-space: nowrap;
     text-overflow: ellipsis;
     padding-right: 18px;
+    user-select: none;
 }
   .c-tag:hover{
     text-overflow: initial;

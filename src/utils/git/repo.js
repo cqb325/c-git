@@ -6,6 +6,7 @@ const nodegit = remote.getGlobal('Git');
 const GitResetDefault = remote.getGlobal('GitResetDefault');
 const simpleGit = require('simple-git');
 import gitConfig from './git-config';
+import store from 'store';
 
 const {
     Clone,
@@ -662,35 +663,78 @@ class Repo {
                     item.circleLocal = true;
                 });
             } else {
-                // const ret = await this.getCommitOffset(ref, upstream);
+                const key = `${this.dir}:${ref.name()}:${upstream.name()}`;
+                let storeCommit = null;
+                if (store.get(key)) {
+                    storeCommit = JSON.parse(store.get(key));
+                }
                 const aheadbehind = await this.getAheadBehind(ref);
-                const commits = await this.getBranchCommitHistory(ref);
-                let upCommits;
-                let unpushs;
-                let stageCommits;
+                const start = new Date().getTime();
+                let unpushs = [];
+                let upCommits = [];
+                let startSha = null;
                 if (aheadbehind.ahead) {
-                    const same = commits[aheadbehind.ahead];
-                    same.isLocal = true;
-                    same.isSameNode = true;
-                    unpushs = commits.slice(0, aheadbehind.ahead);
-                    unpushs.forEach(item => {
-                        item.isLocal = true;
+                    unpushs = await this.getBranchCommitHistory(ref, aheadbehind.ahead + 1);
+                    startSha = unpushs.pop().sha();
+                    unpushs = unpushs.map(item => {
+                        const obj = this.getCommitSerilize(item);
+                        obj.isLocal = true;
+                        return obj;
                     });
-                    stageCommits = commits.slice(aheadbehind.ahead);
-                    console.log(stageCommits[0].sha());
                 } else {
-                    unpushs = [];
-                    stageCommits = commits;
+                    const commit = await this.getBranchHeadCommit(ref);
+                    startSha = commit.sha();
                 }
                 if (aheadbehind.behind) {
                     upCommits = await this.getBranchCommitHistory(upstream, aheadbehind.behind);
-                    upCommits.forEach(item => {
-                        item.isRemote = true;
+                    upCommits = upCommits.map(item => {
+                        const obj = this.getCommitSerilize(item);
+                        obj.isRemote = true;
+                        return obj;
                     });
-                } else {
-                    upCommits = [];
                 }
+                let stageCommits;
+                if (storeCommit) {
+                    if (storeCommit[0].sha1 === startSha) {
+                        console.log('和缓存一致不需要重新获取');
+                        stageCommits = storeCommit;
+                    } else {
+                        console.log('和缓存不一致，需要重新获取');
+                        const data = {
+                            commits: []
+                        };
+                        await this.getBranchCommitHistoryUtilSha(startSha, storeCommit[0].sha1, data);
+                        let lostCommits = data.commits;
+                        lostCommits = lostCommits.map(item => {
+                            return this.getCommitSerilize(item);
+                        });
+                        const same = lostCommits[0];
+                        same.isLocal = true;
+                        same.isSameNode = true;
+                        storeCommit[0].isLocal = false;
+                        storeCommit[0].isSameNode = false;
+                        stageCommits = lostCommits.concat(storeCommit);
+                        store.set(key, JSON.stringify(stageCommits));
+                    }
+                } else {
+                    console.log('没有缓存重新获取');
+                    
+                    const data = {
+                        commits: []
+                    };
+                    await this.getCommitPage(startSha, data);
+                    stageCommits = data.commits;
 
+                    stageCommits = stageCommits.map(item => {
+                        return this.getCommitSerilize(item);
+                    });
+                    const same = stageCommits[0];
+                    same.isLocal = true;
+                    same.isSameNode = true;
+
+                    store.set(key, JSON.stringify(stageCommits));
+                }
+                
                 rets = unpushs.concat(upCommits);
 
                 rets.sort((a, b) => {
@@ -704,6 +748,7 @@ class Repo {
                 });
 
                 rets = rets.concat(stageCommits);
+                console.log(new Date().getTime() - start);
             }
         } else {
             rets = await this.getBranchCommitHistory(ref);
@@ -720,6 +765,41 @@ class Repo {
             localTime,
             remoteTime
         };
+    }
+
+    getCommitSerilize (item) {
+        return {
+            sha1: item.sha(),
+            parents: item.parents().map(p => {
+                return p.tostrS();
+            }),
+            parentcount: item.parentcount(),
+            author: {
+                name: item.author().name(),
+                email: item.author().email()
+            },
+            committer: {
+                name: item.committer().name(),
+                email: item.committer().email()
+            },
+            date: item.date(),
+            id: item.id(),
+            message: item.message(),
+            summary: item.summary(),
+            time: item.time()
+        };
+    }
+
+    async getBranchCommitHistoryUtilSha (startSha, endSha, data) {
+        const walker = this.rawRepo.createRevWalk();
+        walker.push(startSha);
+        walker.sorting(Revwalk.SORT.Time);
+        const commits = await walker.getCommits(2);
+        const nextSha = commits.pop().sha();
+        if (nextSha !== endSha) {
+            data.commits = data.commits.concat(commits);
+            this.getBranchCommitHistoryUtilSha(nextSha, endSha, data);
+        }
     }
 
     async getAheadBehind (ref) {
@@ -765,11 +845,19 @@ class Repo {
     async getBranchCommitHistory (ref, num) {
         const commit = await this.getBranchHeadCommit(ref);
         if (commit) {
-            const walker = this.rawRepo.createRevWalk();
-            walker.push(commit.sha());
-            walker.sorting(Revwalk.SORT.Time);
-            const commits = await walker.getCommits(num || 200);
-            return commits;
+            if (num) {
+                const walker = this.rawRepo.createRevWalk();
+                walker.push(commit.sha());
+                walker.sorting(Revwalk.SORT.Time);
+                const commits = await walker.getCommits(num);
+                return commits;
+            }
+            const data = {
+                commits: []
+            };
+            await this.getCommitPage(commit.sha(), data);
+            
+            return data.commits;
         }
         return null;
     }
@@ -780,6 +868,19 @@ class Repo {
         walker.sorting(Revwalk.SORT.Time);
         const commits = await walker.getCommits(50);
         return commits;
+    }
+
+    async getCommitPage (sha, data) {
+        const walker = this.rawRepo.createRevWalk();
+        walker.push(sha);
+        walker.sorting(Revwalk.SORT.Time);
+        const history = await walker.getCommits(50);
+        const startSha = history.pop().sha();
+
+        if (startSha !== sha) {
+            data.commits = data.commits.concat(history);
+            await this.getCommitPage (startSha, data);
+        }
     }
 
     /**

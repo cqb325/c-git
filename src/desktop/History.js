@@ -1,5 +1,5 @@
 import React from 'react';
-import dg, {adestroy} from '../lib/g';
+import dg from '../lib/g';
 import Dom from 'r-cmui/components/utils/Dom';
 import Dialog from 'r-cmui/components/Dialog';
 import Notification from 'r-cmui/components/Notification';
@@ -76,8 +76,7 @@ class History extends React.Component {
                 this.openResetDialog(commitId);
             }}));
             menu.append(new MenuItem({label: 'Copy Message', click: async () => {
-                const commit = await this.props.history.getCommit(commitId);
-                clipboard.writeText(commit.message());
+                clipboard.writeText(commit.message);
             }}));
                 
             menu.popup({window: remote.getCurrentWindow()});
@@ -269,7 +268,6 @@ class History extends React.Component {
     }
 
     closeFileHistory = () => {
-        // adestroy();
         this.props.repo.setHistoryFile('');
     }
 
@@ -278,40 +276,12 @@ class History extends React.Component {
         const branchesData = this.props.branches.data;
         if (branchesData && data) {
             data = toJS(data);
-            const tags = branchesData.tags;
-            const branches = branchesData.branches;
-            const tagMap = {};
-            const branchMap = {};
-            if (tags) {
-                tags.forEach(tag => {
-                    if (!tagMap[tag.id]) {
-                        tagMap[tag.id] = [];
-                    }
-                    tagMap[tag.id].push(tag.name);
-                });
-            }
-            if (branches) {
-                branches.forEach(branch => {
-                    if (!branchMap[branch.target]) {
-                        branchMap[branch.target] = [];
-                    }
-                    branchMap[branch.target].push(branch.name);
-                    if (branch.head) {
-                        branchMap[branch.target].push('HEAD');
-                    }
-                });
-            }
-            data.commits.forEach(item => {
-                if (tagMap[item.sha()]) {
-                    item.tags = tagMap[item.sha()];
-                }
-                if (branchMap[item.sha()]) {
-                    item.branches = branchMap[item.sha()];
-                }
-            });
             setTimeout(() => {
                 if (data) {
                     dg(toJS(data), {
+                        tags: branchesData.tags,
+                        branches: branchesData.branches,
+                        remotes: branchesData.remotes,
                         onClick: this.onClick,
                         finished: () => {
                             this.props.history.endHistory();
@@ -324,8 +294,13 @@ class History extends React.Component {
     }
 
     render () {
+        const branchesData = this.props.branches.data;
+        const {data} = this.props.history;
+        const {loading, isFetching} = this.props.history;
+        if (!data || !branchesData) {
+            return null;
+        }
         console.log('render history...');
-        const {loading} = this.props.history;
         return <div style={{height: '100%'}} className='history-graph'>
             <SVGSpin spinning={loading} style={{height: '100%'}}>
                 {
@@ -345,7 +320,7 @@ class History extends React.Component {
                         </tr>
                     </tbody>
                 </table>
-                {this.renderGragh()}
+                {loading && !isFetching && this.renderGragh()}
             </SVGSpin>
 
             <Dialog title='Reset' 

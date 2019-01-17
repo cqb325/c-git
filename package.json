@@ -36,7 +36,8 @@
     "react-router-dom": "^4.2.2",
     "react-transition-group": "1.2.1",
     "react-valid-props": "^1.0.12",
-    "simple-git": "^1.107.0"
+    "simple-git": "^1.107.0",
+    "store": "^2.0.12"
   },
   "devDependencies": {
     "babel-cli": "^6.26.0",

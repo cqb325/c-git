@@ -69,7 +69,7 @@ function getItemByPath (dir) {
     return null;
 }
 
-async function push (dir) {
+async function push (dir, progressCallBack) {
     let cred;
     let repo = await open(dir);
   
@@ -96,15 +96,39 @@ async function push (dir) {
             password: auth.password
         });
     }
+
+    cred.callbacks.transferProgress = {
+        throttle: 10,
+        callback (progress) {
+            if (progressCallBack) {
+                const percent = progress.totalObjects()
+                    ? Math.round(progress.receivedObjects() / progress.totalObjects() * 100) : 0;
+                progressCallBack(percent);
+            }
+        }
+    };
   
     await remote.push([refspec], cred);
     repo.free();
     repo = null;
 }
 
-async function fetchAll (dir) {
-    const repo = await open(dir);
-    await repo.fetchAll(fetchOptions());
+async function fetchAll (dir, progressCallBack) {
+    let repo = await open(dir);
+    const cred = fetchOptions();
+    cred.callbacks.transferProgress = {
+        throttle: 10,
+        callback (progress) {
+            if (progressCallBack) {
+                const percent = progress.totalObjects()
+                    ? Math.round(progress.receivedObjects() / progress.totalObjects() * 100) : 0;
+                progressCallBack(percent);
+            }
+        }
+    };
+    await repo.fetchAll(cred);
+    repo.free();
+    repo = null;
 }
 
 async function addBranch (params) {
@@ -135,10 +159,21 @@ async function setUpstream (params) {
  * 克隆
  * @param {*} params 
  */
-async function clone (params) {
+async function clone (params, progressCallBack) {
+    const cred = fetchOptions();
+    cred.callbacks.transferProgress = {
+        throttle: 10,
+        callback (progress) {
+            if (progressCallBack) {
+                const percent = progress.totalObjects()
+                    ? Math.round(progress.receivedObjects() / progress.totalObjects() * 100) : 0;
+                progressCallBack(percent);
+            }
+        }
+    };
     await Clone(params.url, params.dir, {
         checkoutBranch: 'master',
-        fetchOpts: fetchOptions()
+        fetchOpts: cred
     });
 }
 
@@ -277,13 +312,31 @@ async function getAheadBehind (dir, refName) {
     return aheadBehind;
 }
 
+async function getCommitFileDiff (params) {
+    let repo = await open(params.dir);
+    const commit = await repo.getCommit(params.oid);
+    const diffs = await commit.getDiffWithOptions({flags: 8 | 16, pathspec: params.filePath});
+    let diffText = '';
+    for (const i in diffs) {
+        const diff = diffs[i];
+        const buf = await diff.toBuf(1);
+        diffText = buf;
+    }
+    repo.free();
+    repo = null;
+    return diffText;
+}
+
 /**
  * push commits
  */
 ipcMain.on('push', async (event, dir) => {
     console.log('push....');
     try {
-        await push(dir);
+        await push(dir, (percent) => {
+            event.sender.send('progress_res', percent);
+        });
+        event.sender.send('progress_res', 100);
         event.sender.send('push_res', null);
     } catch (e) {
         event.sender.send('push_res', e.message);
@@ -293,7 +346,10 @@ ipcMain.on('push', async (event, dir) => {
 ipcMain.on('fetchAll', async (event, dir) => {
     console.log('fetchAll....');
     try {
-        await fetchAll(dir);
+        await fetchAll(dir, (percent) => {
+            event.sender.send('progress_res', percent);
+        });
+        event.sender.send('progress_res', 100);
         event.sender.send('fetchAll_res', null);
     } catch (e) {
         event.sender.send('fetchAll_res', e.message);
@@ -323,7 +379,10 @@ ipcMain.on('setUpstream', async (event, params) => {
 ipcMain.on('clone', async (event, params) => {
     console.log('clone....');
     try {
-        await clone(params);
+        await clone(params, (percent) => {
+            event.sender.send('progress_res', percent);
+        });
+        event.sender.send('progress_res', 100);
         event.sender.send('clone_res', null);
     } catch (e) {
         event.sender.send('clone_res', e.message);
@@ -347,5 +406,15 @@ ipcMain.on('getAheadBehind', async (event, dir, refName) => {
         event.sender.send('getAheadBehind_res', null, data);
     } catch (e) {
         event.sender.send('getAheadBehind_res', e.message, null);
+    }
+});
+
+ipcMain.on('getCommitFileDiff', async (event, params) => {
+    console.log('getCommitFileDiff....');
+    try {
+        const data = await getCommitFileDiff(params);
+        event.sender.send('getCommitFileDiff_res', null, data);
+    } catch (e) {
+        event.sender.send('getCommitFileDiff_res', e.message, null);
     }
 });

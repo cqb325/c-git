@@ -3,12 +3,27 @@ const Configstore = require('configstore');
 const url = require('url');
 const path = require('path');
 const Git = require('nodegit');
-const { app, BrowserWindow, Menu, ipcMain, globalShortcut } = electron;
+const { app, BrowserWindow, Menu, ipcMain } = electron;
 let win;
 require('./mainRepo');
 global.Git = Git;
 global.GitResetDefault = Git.Reset.default;
 global.GitResetReset = Git.Reset.reset;
+
+
+process.on('uncaughtException', error => {
+    if (error === null) {
+        error = {};
+    }
+
+    if (error.message !== null) {
+        console.log(error.message);
+    }
+
+    if (error.stack !== null) {
+        return console.log(error.stack);
+    }
+});
 
 let sender = null;
 ipcMain.on('connection', (event) => {

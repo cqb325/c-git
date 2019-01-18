@@ -354,13 +354,13 @@ circle.remoteCommit{
     padding-right: 18px;
     user-select: none;
 }
-  .c-tag:hover{
+.c-tag:hover{
     text-overflow: initial;
     overflow: visible;
     max-width: initial;
-  }
-  .c-tag-branch::after,
-  .c-tag-tag::after{
+}
+.c-tag-branch::after,
+.c-tag-tag::after{
     display: inline-block;
     position: absolute;
     right: 4px;
@@ -370,20 +370,49 @@ circle.remoteCommit{
     text-rendering: auto;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-  }
-  .c-tag-tag::after{
+}
+.c-tag-tag::after{
     content: "\F02B";
-  }
-  .c-tag-branch{
-    padding-right: 23px;
-  }
-  .c-tag-branch::after{
-    content: "\F26C";
-    font-size: 10px;
-    top: 5px;
-  }
-  .c-tag-branch.c-tag-remote::after{
-    content: "\F05B";
-    font-size: 10px;
-    top: 5px;
-  }
+}
+.c-tag-branch{
+    padding-right: 5px;
+}
+.c-tag-branch::after{
+    content: '';
+}
+.c-branch-icon{
+    font: normal normal normal 14px/1 'FontAwesome';
+    font-size: inherit;
+    text-rendering: auto;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    margin-left: 3px;
+}
+.c-branch-local-icon{
+    &:after{
+        content: '\F26C'
+    }
+}
+.c-branch-remote-icon{
+    &:after{
+        content: '\F05B'
+    }
+}
+
+.progress-wrap{
+    width: 100px;
+    margin-right: 20px;
+    .cm-progress{
+        margin: 0;
+        .cm-progress-inner{
+            border-radius: 2px;
+            background: #676363;
+            box-shadow: inset 0 0 15px #000;
+            position: relative;
+            top: -2px;
+        }
+    }
+    .cm-progress-bar{
+        border-radius: 2px;
+    }
+}

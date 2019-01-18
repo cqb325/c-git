@@ -29,6 +29,7 @@ export default class Repo {
 
     closeWatch () {
         if (this.watcher) {
+            this.watcher.unwatch(this.cwd);
             this.watcher.close();
         }
         if (this.gitWatcher) {

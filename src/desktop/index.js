@@ -14,6 +14,7 @@ import CreateContent from './welcome/create';
 import CloneContent from './welcome/clone';
 import AboutContent from './welcome/about';
 import Head from './Head';
+import Footer from './Footer';
 import utils from '../utils/utils';
 const {remote, ipcRenderer} = require('electron');
 const Configstore = require('configstore');
@@ -414,6 +415,7 @@ class Desktop extends React.Component {
                 <Content style={{height: 1}}>
                     <Welcome onSelectRepo={this.onSelectRepo} parent={this}/>
                 </Content>
+                <Footer />
                 <Dialog ref={f => this.createDialog = f} title='Create Repository' 
                     content={<CreateContent ref={f => this.createContent = f}/>} onConfirm={this.onCreateRepo}/>
 
@@ -462,6 +464,7 @@ class Desktop extends React.Component {
                         content={<AboutContent />}/>
                 </Layout>
             </Content>
+            <Footer />
         </Layout>;
     }
 }

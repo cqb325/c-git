@@ -129,7 +129,7 @@ class Repo {
             return;
         }
 
-        // this.rawRepo.free();
+        this.rawRepo.free();
         this.rawRepo = null;
 
         // remove from openRepos
@@ -665,6 +665,7 @@ class Repo {
             } else {
                 const key = `${this.dir}:${ref.name()}:${upstream.name()}`;
                 let storeCommit = null;
+                store.remove(key);
                 if (store.get(key)) {
                     storeCommit = JSON.parse(store.get(key));
                 }
@@ -798,7 +799,7 @@ class Repo {
         const nextSha = next.sha();
         if (nextSha !== endSha) {
             data.commits = data.commits.concat(commits);
-            this.getBranchCommitHistoryUtilSha(nextSha, endSha, data);
+            await this.getBranchCommitHistoryUtilSha(nextSha, endSha, data);
         } else {
             data.commits = data.commits.concat(commits).concat(next);
         }

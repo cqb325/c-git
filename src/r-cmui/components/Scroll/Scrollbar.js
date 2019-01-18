@@ -13,6 +13,7 @@ class Scrollbar extends React.Component {
         type: 'vertical',
         barSize: 8,
         thumbSize: 30,
+        minThumbSize: 0,
         scrollOffset: 0
     }
 
@@ -46,12 +47,16 @@ class Scrollbar extends React.Component {
     onMouseMove = (e) => {
         let y2;
         let max;
+        const thumbSize = Math.max(this.props.minThumbSize, this.props.thumbSize);
+        const all = this.track.getBoundingClientRect().height;
+        const delta = this.props.minThumbSize ? (all - this.props.thumbSize) / (all - this.props.minThumbSize) : 1;
+
         if (this.props.type === 'vertical') {
             y2 = e.pageY;
-            max = this.track.getBoundingClientRect().height - this.props.thumbSize;
+            max = this.track.getBoundingClientRect().height - thumbSize;
         } else {
             y2 = e.pageX;
-            max = this.track.getBoundingClientRect().width - this.props.thumbSize;
+            max = this.track.getBoundingClientRect().width - thumbSize;
         }
         let top = this.thumbOffsetTop + y2 - this.lastY;
         top = Math.max(0, top);
@@ -61,14 +66,23 @@ class Scrollbar extends React.Component {
             scrollOffset: top
         }, () => {
             if (this.props.onChange) {
-                this.props.onChange(top);
+                this.props.onChange(top * delta);
             }
         });
     }
 
     onMouseDown = (e) => {
         e.preventDefault();
-        let tmp = this.thumb.style.webkitTransform.replace('translate(', '').replace(')', '').replace(/px/g, '');
+        let tmp;
+        if (this.thumb.style.webkitTransform) {
+            tmp = this.thumb.style.webkitTransform.replace('translate(', '').replace(')', '').replace(/px/g, '');
+        }
+        if (this.thumb.style.mozTransform) {
+            tmp = this.thumb.style.mozTransform.replace('translate(', '').replace(')', '').replace(/px/g, '');
+        }
+        if (this.thumb.style.msTransform) {
+            tmp = this.thumb.style.msTransform.replace('translate(', '').replace(')', '').replace(/px/g, '');
+        }
         tmp = tmp.split(',');
         if (this.props.type === 'vertical') {
             tmp = parseFloat(tmp[1].trim());
@@ -86,8 +100,13 @@ class Scrollbar extends React.Component {
 
     componentWillReceiveProps (nextProps) {
         if (nextProps.scrollOffset !== this.props.scrollOffset && nextProps.scrollOffset !== this.state.scrollOffset) {
+            let delta = 1;
+            if (this.props.minThumbSize) {
+                const all = this.track.getBoundingClientRect().height;
+                delta = (all - this.props.minThumbSize) / (all - this.props.thumbSize);
+            }
             this.setState({
-                scrollOffset: nextProps.scrollOffset
+                scrollOffset: nextProps.scrollOffset * delta
             });
         }
     }
@@ -98,18 +117,18 @@ class Scrollbar extends React.Component {
             [`cm-scrollbar-${type}`]: type
         });
         const scrollOffset = this.state.scrollOffset;
-        style = style || {};
+        const newStyle = Object.assign({}, style || {});
         const thumbStyle = {};
         if (type === 'vertical') {
-            style.width = this.props.barSize;
-            thumbStyle.height = thumbSize;
+            newStyle.width = this.props.barSize;
+            thumbStyle.height = Math.max(thumbSize, this.props.minThumbSize);
             thumbStyle.transform = `translate(0, ${scrollOffset}px)`;
         } else {
-            style.height = this.props.barSize;
-            thumbStyle.width = thumbSize;
+            newStyle.height = this.props.barSize;
+            thumbStyle.width = Math.max(thumbSize, this.props.minThumbSize);
             thumbStyle.transform = `translate(${scrollOffset}px, 0)`;
         }
-        return <div className={className} style={style}>
+        return <div className={className} style={newStyle}>
             <div className='cm-scrollbar-track' ref={(f) => this.track = f}>
                 <div className='cm-scrollbar-thumb' style={thumbStyle} ref={(f) => this.thumb = f}></div>
             </div>

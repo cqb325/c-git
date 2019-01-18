@@ -458,7 +458,10 @@ function GitGragh() {
         //         $("#T_" + sha).removeClass("commitHover");
         //     });
         // }
-
+        let startWith = function(source, str){
+            var reg=new RegExp("^"+str);
+            return reg.test(source);
+        }
         my.insertTag = function (pos, isTag, hasBoth, target, insertBefore) {
 
             var objs = isTag ? my.tags : my.branches;
@@ -481,23 +484,61 @@ function GitGragh() {
 
             svg.appendChild(path);
 
-            const div = document.createElement('div');
-            div.style.position = 'absolute';
+            const div = $('<div></div>');
+            div.css({
+                position: 'absolute',
+                left: '15px',
+                top: `${pos[1]}px`,
+                'background-color': posCopy.color
+            });
+            div.addClass('c-tag');
             var type = isTag ? 'tag' : 'branch';
-            div.className = `c-tag c-tag-${type}`;
+            div.addClass(`c-tag-${type}`);
             if (my.isRemote) {
-                div.className += ' c-tag-remote';
+                div.addClass('c-tag-remote');
             }
-            div.style.left = `${15}px`;
-            div.id = my.sha1;
-            div.name = my.sha1;
-            div.style.top = `${pos[1]}px`;
-            div.style.backgroundColor = posCopy.color;
-            div.innerHTML = objs.join(',');
+            div.attr('id', my.sha1);
+            div.attr('name', my.sha1);
+            let names = objs.map(obj => {
+                if(startWith(obj, 'L_')){
+                    return obj.substr(2);
+                } else if (startWith(obj, 'R_')) {
+                    return obj.split('_')[2];
+                } else {
+                    return obj;
+                }
+            });
+            div.html(names.join(','));
 
-            $('.commits-content').append(div);
+            if(!isTag){
+                objs.forEach(obj => {
+                    let i = $('<i/>');
+                    i.addClass('c-branch-icon');
+                    let isLocal = startWith(obj, 'L_');
+                    let tip = '';
+                    if(isLocal){
+                        tip = 'head/'+obj.substr(2);
+                    } else {
+                        tip = obj.substr(2).replace('_', '/');
+                    }
+                    i.attr('title', tip);
+                    i.addClass(isLocal ? 'c-branch-local-icon' : 'c-branch-remote-icon');
+                    div.append(i);
+                });
+            }
 
-            return {domNode: null, boxWidth: 0};
+            if(insertBefore){
+                insertBefore.append(div);
+                div.css({
+                    position: 'relative',
+                    top: 0,
+                    left: 0
+                });
+            } else {
+                $('.commits-content').append(div);
+            }
+
+            return div;
         }
     }
 
@@ -539,10 +580,10 @@ function GitGragh() {
                 if (!branchMap[branch.target]) {
                     branchMap[branch.target] = [];
                 }
-                branchMap[branch.target].push(branch.name);
-                if (branch.head) {
-                    branchMap[branch.target].push('HEAD');
-                }
+                branchMap[branch.target].push('L_'+branch.name);
+                // if (branch.head) {
+                //     branchMap[branch.target].push('HEAD');
+                // }
             });
         }
 
@@ -553,7 +594,7 @@ function GitGragh() {
                     if (!remoteMap[item.target]) {
                         remoteMap[item.target] = [];
                     }
-                    remoteMap[item.target].push(item.name);
+                    remoteMap[item.target].push('R_'+remoteName+'_'+item.name);
                 });
             }
         }
@@ -608,6 +649,8 @@ function GitGragh() {
                 };
 
                 var item = o;
+                delete item['tags'];
+                delete item['branches'];
                 commitsList.push(item);
                 commitsTable[item.sha1] = item;
                 hasParents ? item.parents = line.parents : null;

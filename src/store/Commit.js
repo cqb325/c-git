@@ -21,14 +21,16 @@ export default class Commit {
     }
 
     async getDiffText (filePath) {
+        console.log(this.data.commit, filePath);
         const diffs = await this.data.commit.getDiffWithOptions({flags: 8 | 16, pathspec: filePath});
-        let diffText = '';
-        for (const i in diffs) {
-            const diff = diffs[i];
-            const buf = await diff.toBuf(1);
-            diffText = utils.decodeStr(buf);
-        }
-        this.setDiffText(diffText);
+        console.log(diffs);
+        // let diffText = '';
+        // for (const i in diffs) {
+        //     const diff = diffs[i];
+        //     const buf = await diff.toBuf(1);
+        //     diffText = utils.decodeStr(buf);
+        // }
+        // this.setDiffText(diffText);
     }
 
     @action

@@ -83,7 +83,7 @@ class Repo {
      */
     static async init (dir) {
         const repo = await Repository.init(dir, 0);
-        // repo.free();
+        repo.free();
     }
 
     /**
@@ -99,7 +99,7 @@ class Repo {
             fetchOpts: this.fetchOptions(credentials)
         });
 
-        // repo.free();
+        repo.free();
     }
 
     /**
@@ -262,7 +262,7 @@ class Repo {
      * push commits to remote
      */
     async push () {
-        const cred = this.getFetchOptions();
+        // const cred = this.getFetchOptions();
         
         const branch = await this.rawRepo.getCurrentBranch();
         if (!branch.isHead()) {

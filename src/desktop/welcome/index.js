@@ -81,7 +81,7 @@ class Welcome extends React.Component {
         this.store.set(target.name, target);
 
         if (this.props.onSelectRepo) {
-            sessionStorage.setItem('current_repo_cwd', item.dir);
+            localStorage.setItem('current_repo_cwd', item.dir);
             this.props.onSelectRepo(item.dir);
         }
     }

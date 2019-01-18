@@ -144,7 +144,7 @@ class Desktop extends React.Component {
         ipcRenderer.on('menu_clone', () => {
             this.openCloneDialog();
         });
-        const dir = sessionStorage.getItem('current_repo_cwd');
+        const dir = localStorage.getItem('current_repo_cwd');
         if (dir) {
             this.onSelectRepo(dir);
         }
@@ -172,7 +172,7 @@ class Desktop extends React.Component {
                     }
                     store.set(storeItem.name, storeItem);
 
-                    sessionStorage.setItem('current_repo_cwd', filePaths[0]);
+                    localStorage.setItem('current_repo_cwd', filePaths[0]);
                     this.onSelectRepo(filePaths[0], () => {
                         this.refreshBranches();
                         this.refreshHistory();
@@ -210,7 +210,7 @@ class Desktop extends React.Component {
         item.lastOpenTime = new Date().getTime();
         store.set(item.name, item);
 
-        sessionStorage.setItem('current_repo_cwd', item.dir);
+        localStorage.setItem('current_repo_cwd', item.dir);
         this.onSelectRepo(item.dir, () => {
             this.refreshBranches();
             this.refreshHistory();
@@ -220,7 +220,7 @@ class Desktop extends React.Component {
 
     openWelcome () {
         this.props.repo.closeWatch();
-        sessionStorage.setItem('current_repo_cwd', '');
+        localStorage.setItem('current_repo_cwd', '');
         this.props.repo.setCwd('');
     }
 
@@ -292,7 +292,7 @@ class Desktop extends React.Component {
                     lastOpenTime: new Date().getTime(),
                     auth: info.user || {}
                 });
-                sessionStorage.setItem('current_repo_cwd', dir);
+                localStorage.setItem('current_repo_cwd', dir);
                 this.onSelectRepo(dir);
             } catch (e) {
                 Notification.error({
@@ -358,7 +358,7 @@ class Desktop extends React.Component {
                         lastOpenTime: new Date().getTime(),
                         auth: info.user || {}
                     });
-                    sessionStorage.setItem('current_repo_cwd', params.dir);
+                    localStorage.setItem('current_repo_cwd', params.dir);
                     this.onSelectRepo(params.dir);
                 }
             });
@@ -437,7 +437,7 @@ class Desktop extends React.Component {
                             <ResizeContent handlerSize={2} height={'40%'} align='bottom'>
                                 <FileTree cwd={cwd} bind={this.bindFileTree.bind(this)}/>
                             </ResizeContent>
-                            <ResizeContent style={{flex: 1}} resizeable={false}>
+                            <ResizeContent style={{flex: 1, background: '#1E1E1E'}} resizeable={false}>
                                 <Branches bind={this.bindBranches.bind(this)}/>
                             </ResizeContent>
                         </Layout>

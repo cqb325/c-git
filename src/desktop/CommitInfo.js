@@ -6,7 +6,7 @@ const path = require('path');
 import { inject, observer } from 'mobx-react';
 import { toJS } from 'mobx';
 
-const {remote, clipboard} = require('electron');
+const {remote, clipboard, ipcRenderer} = require('electron');
 const SysMenu = remote.Menu;
 const MenuItem = remote.MenuItem;
 
@@ -30,7 +30,8 @@ class CommitInfo extends React.Component {
             const commit = data.commit;
             menu.append(new MenuItem({label: 'Show Changes', click: () => {
                 const filePath = ele.data('path');
-                this.props.commit.getDiffText(filePath, commit.sha());
+                this.getCommitFileDiffText(commit.sha(), filePath);
+                // this.props.commit.getDiffText(filePath, commit.sha());
             }}));
             menu.append(new MenuItem({label: 'Open', click: () => {
                 const dir = ele.data('dir');
@@ -54,6 +55,27 @@ class CommitInfo extends React.Component {
         this.props.commit.setCwd(this.props.repo.cwd);
 
         document.addEventListener('contextmenu', this.contextMenu, false);
+    }
+
+    getCommitFileDiffText (id, filePath) {
+        ipcRenderer.send('getCommitFileDiff', {
+            dir: this.props.repo.cwd,
+            oid: id,
+            filePath
+        });
+        ipcRenderer.once('getCommitFileDiff_res', (event, err, text) => {
+            if (err) {
+                Notification.error({
+                    title: '获取diff错误',
+                    desc: err,
+                    theme: 'danger'
+                });
+            } else {
+                text = text.replace(/%/g, '%25');
+                text = utils.decodeStr(text);
+                this.props.commit.setDiffText(text);
+            }
+        });
     }
 
     close = () => {

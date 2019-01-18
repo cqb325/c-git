@@ -69,6 +69,9 @@ export default class Repo {
             let watchReady = false;
             this.watcher = chokidar.watch(cwd, { ignored: ignoreRE }).on('all', (event, path) => {
                 if (callback && watchReady) {
+                    if (event === 'unlinkDir') {
+                        this.watcher.unwatch(path);
+                    }
                     callback(event, path);
                 }
             });

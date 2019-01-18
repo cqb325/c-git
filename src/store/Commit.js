@@ -21,9 +21,9 @@ export default class Commit {
     }
 
     async getDiffText (filePath) {
-        console.log(this.data.commit, filePath);
-        const diffs = await this.data.commit.getDiffWithOptions({flags: 8 | 16, pathspec: filePath});
-        console.log(diffs);
+        // console.log(this.data.commit, filePath);
+        // const diffs = await this.data.commit.getDiffWithOptions({flags: 8 | 16, pathspec: filePath});
+        // console.log(diffs);
         // let diffText = '';
         // for (const i in diffs) {
         //     const diff = diffs[i];

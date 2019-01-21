@@ -264,6 +264,8 @@ class History extends React.Component {
         } finally {
             this.resetDialog.hideLoading();
             this.resetDialog.close();
+
+            this.props.commit.setData(null);
         }
     }
 

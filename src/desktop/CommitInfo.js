@@ -132,9 +132,9 @@ class CommitInfo extends React.Component {
                 </div>
                 <div className='mt-10' style={{paddingLeft: 5}}>Message: </div>
                 <div className='commit-info'>
-                    <div>
-                        {commit.message()}
-                    </div>
+                    <pre>
+                        {`${commit.message()}`}
+                    </pre>
                 </div>
                 <div className='mt-10' style={{paddingLeft: 5}}>Author: </div>
                 <div className='mt-10' style={{paddingLeft: 5}}>

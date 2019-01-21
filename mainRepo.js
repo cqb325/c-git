@@ -113,6 +113,50 @@ async function push (dir, progressCallBack) {
     repo = null;
 }
 
+/**
+ * 上传分支到远程
+ * @param {*} params 
+ * @param {*} progressCallBack 
+ */
+async function pushToRemote (params, progressCallBack) {
+    let cred;
+    let repo = await open(params.dir);
+  
+    // 当前本地分支
+    const branch = await repo.getBranch(params.ref);
+    const remote = await repo.getRemote(params.remote);
+
+    const url = remote.url();
+    if (url.indexOf('ssh') !== -1) {
+        cred = fetchOptions({type: 'ssh'});
+    }
+    if (url.indexOf('http') !== -1) {
+        const storeInfo = getItemByPath(params.dir);
+        const auth = storeInfo.auth;
+        cred = fetchOptions({
+            type: 'http',
+            username: auth.username,
+            password: auth.password
+        });
+    }
+    const refspec = `refs/heads/${branch.shorthand()}:refs/heads/${branch.shorthand()}`;
+
+    cred.callbacks.transferProgress = {
+        throttle: 10,
+        callback (progress) {
+            if (progressCallBack) {
+                const percent = progress.totalObjects()
+                    ? Math.round(progress.receivedObjects() / progress.totalObjects() * 100) : 0;
+                progressCallBack(percent);
+            }
+        }
+    };
+    await remote.push([refspec], cred);
+    await Branch.setUpstream(branch, `${params.remote}/${branch.shorthand()}`);
+    repo.free();
+    repo = null;
+}
+
 async function fetchAll (dir, progressCallBack) {
     let repo = await open(dir);
     const cred = fetchOptions();
@@ -203,6 +247,7 @@ async function getBranches (dir) {
                 head: !!ref.isHead(),
                 localOffset,
                 remoteOffset,
+                isTracked: !!remote,
                 remote: remote ? remote.shorthand().replace(`/${ref.shorthand()}`, '') : '',
                 target: ref.target().toString()
             });
@@ -328,6 +373,23 @@ async function getCommitFileDiff (params) {
 }
 
 /**
+ * checkout 远程分支
+ * @param {*} params 
+ */
+async function checkoutRemote (params) {
+    let repo = await open(params.dir);
+
+    const remoteRef = await repo.getBranch(params.ref);
+    const branch = await repo.createBranch(params.name, remoteRef.target(), true);
+    if (params.isTrack === '1') {
+        await Branch.setUpstream(branch, params.ref);
+    }
+
+    repo.free();
+    repo = null;
+}
+
+/**
  * push commits
  */
 ipcMain.on('push', async (event, dir) => {
@@ -416,5 +478,28 @@ ipcMain.on('getCommitFileDiff', async (event, params) => {
         event.sender.send('getCommitFileDiff_res', null, data);
     } catch (e) {
         event.sender.send('getCommitFileDiff_res', e.message, null);
+    }
+});
+
+ipcMain.on('checkoutRemote', async (event, params) => {
+    console.log('checkoutRemote....');
+    try {
+        await checkoutRemote(params);
+        event.sender.send('checkoutRemote_res', null);
+    } catch (e) {
+        event.sender.send('checkoutRemote_res', e.message);
+    }
+});
+
+ipcMain.on('pushToRemote', async (event, params) => {
+    console.log('pushToRemote....');
+    try {
+        await pushToRemote(params, (percent) => {
+            event.sender.send('progress_res', percent);
+        });
+        event.sender.send('progress_res', 100);
+        event.sender.send('pushToRemote_res', null);
+    } catch (e) {
+        event.sender.send('pushToRemote_res', e.message);
     }
 });

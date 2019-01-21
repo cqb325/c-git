@@ -109,6 +109,9 @@ class Head extends React.Component {
                     <Menu.Item command='welcome'><FontIcon icon='' style={{marginRight: 20}}/>Welcome</Menu.Item>
                     <Menu.Item command='exit'><FontIcon icon='stop-circle-o'/>Exit</Menu.Item>
                 </SubMenu>
+                <SubMenu title='flow'>
+                    <Menu.Item command='about'>Config</Menu.Item>
+                </SubMenu>
                 <SubMenu title='help'>
                     <Menu.Item command='about'>About</Menu.Item>
                 </SubMenu>

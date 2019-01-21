@@ -173,6 +173,9 @@ class Desktop extends React.Component {
                     store.set(storeItem.name, storeItem);
 
                     localStorage.setItem('current_repo_cwd', filePaths[0]);
+                    if (this.commitInfo) {
+                        this.commitInfo.close();
+                    }
                     this.onSelectRepo(filePaths[0], () => {
                         this.refreshBranches();
                         this.refreshHistory();
@@ -211,6 +214,10 @@ class Desktop extends React.Component {
         store.set(item.name, item);
 
         localStorage.setItem('current_repo_cwd', item.dir);
+        if (this.commitInfo) {
+            this.commitInfo.close();
+        }
+        
         this.onSelectRepo(item.dir, () => {
             this.refreshBranches();
             this.refreshHistory();
@@ -238,6 +245,10 @@ class Desktop extends React.Component {
 
     bindHistory (ref) {
         this.history = ref;
+    }
+
+    bindCommitInfo (ref) {
+        this.commitInfo = ref;
     }
 
     onCommit = () => {
@@ -293,6 +304,9 @@ class Desktop extends React.Component {
                     auth: info.user || {}
                 });
                 localStorage.setItem('current_repo_cwd', dir);
+                if (this.commitInfo) {
+                    this.commitInfo.close();
+                }
                 this.onSelectRepo(dir);
             } catch (e) {
                 Notification.error({
@@ -359,6 +373,9 @@ class Desktop extends React.Component {
                         auth: info.user || {}
                     });
                     localStorage.setItem('current_repo_cwd', params.dir);
+                    if (this.commitInfo) {
+                        this.commitInfo.close();
+                    }
                     this.onSelectRepo(params.dir);
                 }
             });
@@ -449,7 +466,7 @@ class Desktop extends React.Component {
                             </ResizeContent>
                             <ResizeContent handlerSize={2} width={300} minWidth={300} direction='vertical' align='left' className='right-sider'>
                                 <Status bind={this.bindStatus.bind(this)} onCommit={this.onCommit}/>
-                                <CommitInfo/>
+                                <CommitInfo bind={this.bindCommitInfo.bind(this)}/>
                             </ResizeContent>
                         </Layout>
                     </Content>

@@ -3,6 +3,7 @@ import { inject, observer } from 'mobx-react';
 import { toJS } from 'mobx';
 import Dom from 'r-cmui/components/utils/Dom';
 import Dialog from 'r-cmui/components/Dialog';
+import MessageBox from 'r-cmui/components/MessageBox';
 import Notification from 'r-cmui/components/Notification';
 import Button from 'r-cmui/components/Button';
 import StashContent from './status/StashContent';
@@ -95,6 +96,17 @@ class Status extends React.Component {
                     click: () => {
                         this.props.status.discardFile();
                     }}));
+                menu.append(new MenuItem({label: 'Remove',
+                    enabled: state === 'MODIFIED',
+                    click: () => {
+                        const filePath = ele.data('path');
+                        this.openRemoveConfirm(filePath);
+                    }}));
+                menu.append(new MenuItem({label: 'Delete', 
+                    click: () => {
+                        const filePath = ele.data('path');
+                        this.openDeleteConfirm(filePath);
+                    }}));
                 menu.popup(remote.getCurrentWindow());
             }, 0);
         }
@@ -117,6 +129,49 @@ class Status extends React.Component {
         document.removeEventListener('keyup', this.onKeyUp);
         document.removeEventListener('keydown', this.onKeyDown);
         document.removeEventListener('contextmenu', this.contextMenu);
+    }
+
+    openDeleteConfirm (filePath) {
+        this.deleteConfirm.show('Sure to delete this file ? you may require a recovery tool to restore the deleted file');
+        this.deleteConfirm.setData(filePath);
+    }
+
+    onDelete = (flag) => {
+        if (flag) {
+            const filePath = this.deleteConfirm.getData();
+            try {
+                utils.deleteFile(this.props.repo.cwd, filePath);
+            } catch (e) {
+                Notification.error({
+                    title: 'Delete Error',
+                    theme: 'danger',
+                    desc: e.message
+                });
+            }
+        }
+        return true;
+    }
+
+    openRemoveConfirm (filePath) {
+        this.removeConfirm.show('Sure to remove this file from repository ?');
+        this.removeConfirm.setData(filePath);
+    }
+
+    onRemove = async (flag) => {
+        if (flag) {
+            const filePath = this.removeConfirm.getData();
+            try {
+                await this.props.status.removeFile(filePath);
+                this.refresh();
+            } catch (e) {
+                Notification.error({
+                    title: 'Remove Error',
+                    theme: 'danger',
+                    desc: e.message
+                });
+            }
+        }
+        return true;
     }
 
     hasSelectedUntracked () {
@@ -376,6 +431,9 @@ class Status extends React.Component {
                 content={<CommitCotent ref={f => this.commitContent = f} template={template}/>}
                 onConfirm={this.onCommit}
             />
+
+            <MessageBox type='confirm' ref={f => this.deleteConfirm = f} confirm={this.onDelete}/>
+            <MessageBox type='confirm' ref={f => this.removeConfirm = f} confirm={this.onRemove}/>
         </div>;
     }
 }

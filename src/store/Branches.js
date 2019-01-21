@@ -62,6 +62,22 @@ export default class Branches {
         }
     }
 
+    /**
+     * drop stash
+     * @param {*} index 
+     */
+    async stashDrop (index) {
+        await this.client.stashDrop(index);
+    }
+
+    /**
+     * apply stash
+     * @param {*} index 
+     */
+    async stashApply (index) {
+        await this.client.stashApply(index);
+    }
+
     async pull () {
         await this.client.pull();
     }
@@ -100,6 +116,22 @@ export default class Branches {
      */
     async review (branchName) {
         return await this.client.review(branchName);
+    }
+
+    async deleteRemote (refName) {
+        await this.client.deleteRemote(refName);
+    }
+
+    async getRemotes () {
+        return await this.client.getRemotes();
+    }
+
+    async getRemote (name) {
+        return await this.client.getRemote(name);
+    }
+
+    async setRemoteURL (data) {
+        await this.client.setRemoteURL(data.name, data.url);
     }
 
     @action

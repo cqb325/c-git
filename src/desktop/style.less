@@ -1,6 +1,9 @@
 .left-sider{
     background: #252526;
 }
+.cm-accordion{
+    box-shadow: none;
+}
 .cm-accordion-item-head{
     padding: 5px 20px !important;
 }
@@ -73,6 +76,11 @@
     &:hover{
         .branches-arrow-node{
             background-image: url('../images/eye.svg');
+        }
+    }
+    &.no-track{
+        .branches-icon{
+            background-image: url('../images/git-branch-no-track.svg');
         }
     }
 }

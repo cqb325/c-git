@@ -6,9 +6,12 @@ import Notification from 'r-cmui/components/Notification';
 import Accordion from 'r-cmui/components/Accordion';
 import AddBranch from './branch/AddBranch';
 import SetTrackedBranch from './branch/SetTrackedBranch';
+import CheckoutRemoteBranch from './branch/CheckoutRemoteBranch';
+import PushBranchToRemote from './branch/PushBranchToRemote';
+import PropertyContent from './branch/PropertyContent';
 import utils from '../utils/utils';
 
-const {remote, clipboard, ipcRenderer} = require('electron');
+const {remote, ipcRenderer} = require('electron');
 const SysMenu = remote.Menu;
 const MenuItem = remote.MenuItem;
 
@@ -47,7 +50,7 @@ class Branches extends React.Component {
     contextMenu = async (e) => {
         e.preventDefault();
         let menu;
-        if (Dom.closest(e.target, '.cm-accordion-item-head') || Dom.closest(e.target, '.branches-sub-node')) {
+        if (Dom.closest(e.target, '.cm-accordion-item-head') || Dom.closest(e.target, '.remote-node-title') || Dom.closest(e.target, '.branches-sub-node')) {
             menu = new SysMenu();
         }
         if (Dom.closest(e.target, '.branches-sub-node')) {
@@ -90,6 +93,12 @@ class Branches extends React.Component {
                         const ref = ele.data('ref');
                         this.openStopConfirm(ref);
                     }}));
+                menu.append(new MenuItem({label: 'Push to',
+                    click: () => {
+                        const ref = ele.data('ref');
+                        const name = ele.data('name');
+                        this.openPushToDialog(ref, name);
+                    }}));
             }
             if (type === 'tag') {
                 menu.append(new MenuItem({label: 'Check Out', click: () => {
@@ -103,13 +112,14 @@ class Branches extends React.Component {
             }
             if (type === 'remote') {
                 menu.append(new MenuItem({label: 'Check Out', click: () => {
-                    console.log('Check Out');
-                }}));
-                menu.append(new MenuItem({label: 'Log', click: () => {
-                    console.log('Log');
+                    const name = ele.data('name');
+                    const ref = ele.data('ref');
+                    const remote = ele.data('remote');
+                    this.openCheckoutRemoteDialog(name, remote, ref);
                 }}));
                 menu.append(new MenuItem({label: 'Delete', click: () => {
-                    console.log('Delete');
+                    const ref = ele.data('ref');
+                    this.openDeleteRemoteConfirm(ref);
                 }}));
             }
             if (type === 'stash') {
@@ -118,25 +128,35 @@ class Branches extends React.Component {
                     await this.props.branches.stashPop(parseInt(index, 10));
                 }}));
                 menu.append(new MenuItem({label: 'Apply', click: () => {
-                    
+                    const index = ele.data('index');
+                    this.stashApply(index);
                 }}));
-                menu.append(new MenuItem({label: 'Drop', click: () => {
-                    
+                menu.append(new MenuItem({label: 'Drop', click: async () => {
+                    const index = ele.data('index');
+                    this.stashDrop(index);
                 }}));
             }
         }
-        if (Dom.closest(e.target, '.cm-accordion-item-head') && !Dom.closest(e.target, '.branches-sub-node')) {
+        if ((Dom.closest(e.target, '.cm-accordion-item-head')
+        || Dom.closest(e.target, '.remote-node-title')) 
+            && !Dom.closest(e.target, '.branches-sub-node')) {
             let ele = Dom.closest(e.target, '.cm-accordion-item-head');
-            ele = Dom.dom(ele);
-            const type = ele.data('type');
+            let remoteEle = Dom.closest(e.target, '.remote-node-title');
+            ele = ele ? Dom.dom(ele) : null;
+            remoteEle = remoteEle ? Dom.dom(remoteEle) : null;
+            const type = ele ? ele.data('type') : null;
+            const remoteType = remoteEle ? remoteEle.data('type') : null;
+            console.log(remoteType);
+            
             if (type === 'local') {
                 menu.append(new MenuItem({label: 'Add Branch', click: () => {
                     this.openAddBranch();
                 }}));
             }
-            if (type === 'remote') {
+            if (remoteType === 'remote') {
                 menu.append(new MenuItem({label: 'Properties', click: () => {
-                    console.log('Properties');
+                    const name = remoteEle.data('name');
+                    this.openPropertiesDialog(name);
                 }}));
             }
             if (type === 'tag') {
@@ -145,7 +165,7 @@ class Branches extends React.Component {
                 }}));
             }
         }
-        if (Dom.closest(e.target, '.cm-accordion-item-head') || Dom.closest(e.target, '.branches-sub-node')) {
+        if (Dom.closest(e.target, '.cm-accordion-item-head') || Dom.closest(e.target, '.remote-node-title') || Dom.closest(e.target, '.branches-sub-node')) {
             menu.popup({window: remote.getCurrentWindow()});
         }
     }
@@ -164,6 +184,185 @@ class Branches extends React.Component {
         document.addEventListener('contextmenu', this.contextMenu, false);
     }
 
+    /**
+     * 打开remote属性信息
+     * @param {*} name 
+     */
+    async openPropertiesDialog (name) {
+        const remote = await this.props.branches.getRemote(name);
+        this.propertyContent.setData(remote);
+        this.propertyDialog.open();
+        this.propertyDialog.setData(name);
+    }
+
+    onChangeRemoteURL = (flag) => {
+        if (flag) {
+            if (this.propertyContent.isValid() && this.propertyContent.isChanged()) {
+                this.propertyDialog.showLoading();
+                const name = this.propertyDialog.getData();
+                const data = this.propertyContent.getValue();
+                data.name = name;
+                this.changeRemoteURL(data);
+            }
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * 切换远程地址
+     * @param {*} data 
+     */
+    async changeRemoteURL (data) {
+        // data.dir = this.props.repo.cwd;
+        try {
+            await this.props.branches.setRemoteURL(data);
+        } catch (e) {
+            console.log(e);
+            Notification.error({
+                title: 'Set Remote URL Error',
+                desc: e.message,
+                theme: 'danger'
+            });
+        } finally {
+            this.propertyDialog.hideLoading();
+            this.propertyDialog.close();
+        }
+    }
+
+    /**
+     * drop stash
+     * @param {*} index stash index
+     */
+    async stashDrop (index) {
+        try {
+            await this.props.branches.stashDrop(parseInt(index, 10));
+        } catch (e) {
+            Notification.error({
+                title: 'Drop Stash Error',
+                desc: e.message,
+                theme: 'danger'
+            });
+        }
+    }
+
+    /**
+     * apply stash
+     * @param {*} index stash index
+     */
+    async stashApply (index) {
+        try {
+            await this.props.branches.stashApply(parseInt(index, 10));
+        } catch (e) {
+            Notification.error({
+                title: 'Apply Stash Error',
+                desc: e.message,
+                theme: 'danger'
+            });
+        }
+    }
+
+    openCheckoutRemoteDialog (name, remote, ref) {
+        this.remoteDialog.open();
+        this.remoteContent.setData({
+            name,
+            ref,
+            remote
+        });
+        this.remoteDialog.setData(`${remote}/${name}`);
+    }
+
+    onCheckoutRemoteBranch = (flag) => {
+        if (flag) {
+            if (this.remoteContent.isValid()) {
+                this.remoteDialog.showLoading();
+                const data = this.remoteContent.getValue();
+                const ref = this.remoteDialog.getData();
+                data.ref = ref;
+                if (this.checkNameExist(data.name)) {
+                    this.tip.show(`branch ${data.name} has exsit, please input an other name!`);
+                    this.remoteDialog.hideLoading();
+                } else {
+                    this.checkoutRemoteBranch(data);
+                }
+            }
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * 检出远程分支
+     * @param {*} data 
+     */
+    checkoutRemoteBranch (data) {
+        data.dir = this.props.repo.cwd;
+        ipcRenderer.send('checkoutRemote', data);
+        ipcRenderer.once('checkoutRemote_res', (event, err) => {
+            if (err) {
+                Notification.error({
+                    title: 'Checkout Remote Error',
+                    desc: err,
+                    theme: 'danger'
+                });
+            }
+            this.remoteDialog.hideLoading();
+            this.remoteDialog.close();
+        });
+    }
+
+    async openPushToDialog (ref, name) {
+        const remotes = await this.props.branches.getRemotes();
+        this.pushRemoteContent.setData({
+            remotes,
+            name
+        });
+        this.pushRemoteDialog.open();
+        this.pushRemoteDialog.setData({
+            ref, name
+        });
+    }
+
+    onPushBranchToRemote = (flag) => {
+        if (flag) {
+            if (this.pushRemoteContent.isValid()) {
+                this.pushRemoteDialog.showLoading();
+                const data = this.pushRemoteDialog.getData();
+                const value = this.pushRemoteContent.getValue();
+                data.remote = value.remote;
+
+                this.pushBranchToRemote(data);
+            }
+            return false;
+        }
+        return true;
+    }
+
+    async pushBranchToRemote (data) {
+        data.dir = this.props.repo.cwd;
+        ipcRenderer.send('pushToRemote', data);
+        ipcRenderer.once('pushToRemote_res', (event, err) => {
+            if (err) {
+                Notification.error({
+                    title: 'Push Branch To Remote',
+                    desc: err,
+                    theme: 'danger'
+                });
+            }
+            this.pushRemoteDialog.hideLoading();
+            this.pushRemoteDialog.close();
+        });
+    }
+
+    checkNameExist (name) {
+        const data = this.props.branches.data;
+        const branchData = toJS(data);
+        const arr = branchData.branches.filter(branch => {
+            return branch.name === name;
+        });
+        return arr && arr.length;
+    }
+
     pull () {
         ipcRenderer.send('fetchAll', this.props.repo.cwd);
         ipcRenderer.once('fetchAll_res', async (event, err) => {
@@ -177,6 +376,29 @@ class Branches extends React.Component {
                 await this.props.branches.pull();
             }
         });
+    }
+
+    async openDeleteRemoteConfirm (name) {
+        this.deleteRemoteConfirm.show(`Sure to delete remote ${name}`);
+        this.deleteRemoteConfirm.setData(name);
+    }
+
+    onDeleteRemote = async (flag) => {
+        if (flag) {
+            this.deleteRemoteConfirm.showLoading();
+            const refName = this.deleteRemoteConfirm.getData();
+            try {
+                await this.props.branches.deleteRemote(refName);
+            } catch (e) {
+                Notification.error({
+                    title: 'Delete Remote Error',
+                    desc: e.message,
+                    theme: 'danger'
+                });
+            }
+            this.deleteRemoteConfirm.hideLoading();
+        }
+        return true;
     }
 
     async review (name) {
@@ -454,11 +676,12 @@ class Branches extends React.Component {
                 branches.map(branch => {
                     const active = branch.ref === selectedSubNode;
                     return <div key={branch.ref}>
-                        <div className={`branches-sub-node ${active ? 'active' : ''}`}
+                        <div className={`branches-sub-node ${active ? 'active' : ''} ${branch.isTracked ? '' : 'no-track'}`}
                             data-type='local'
                             data-ref={branch.ref}
                             data-name={branch.name}
                             data-index={branch.index}
+                            data-target={branch.target}
                             data-remote={branch.remote}
                         >
                             <span className='branches-arrow-node'></span>
@@ -497,7 +720,8 @@ class Branches extends React.Component {
             length += remotes[name].length;
             const remote = remotes[name];
             const remoteEle = <div key={name} className={'remote-node'}>
-                <div className={'remote-node-title'}>
+                <div className={'remote-node-title'} 
+                    data-type={'remote'} data-name={name}>
                     <span className='branches-arrow-node'></span>
                     <span className='remote-icon branches-icon'></span>
                     <span>{name}</span>
@@ -597,8 +821,32 @@ class Branches extends React.Component {
                     : null
             }
 
+            {
+                this.props.branches.data
+                    ? <Dialog ref={f => this.remoteDialog = f}
+                        title='Checkout Remote Branch'
+                        onConfirm={this.onCheckoutRemoteBranch}
+                        content={<CheckoutRemoteBranch data={this.props.branches.data} ref={f => this.remoteContent = f}/>}
+                    />
+                    : null
+            }
+
+            <Dialog ref={f => this.pushRemoteDialog = f}
+                title='Put Branch to Remote'
+                onConfirm={this.onPushBranchToRemote}
+                content={<PushBranchToRemote ref={f => this.pushRemoteContent = f}/>}
+            />
+
+            <Dialog ref={f => this.propertyDialog = f}
+                title='Properties'
+                onConfirm={this.onChangeRemoteURL}
+                content={<PropertyContent ref={f => this.propertyContent = f}/>}
+            />
+
             <MessageBox ref={f => this.deleteConfirm = f} type='confirm' confirm={this.deleteBranch}/>
             <MessageBox ref={f => this.stopConfirm = f} type='confirm' confirm={this.stopTracking}/>
+            <MessageBox ref={f => this.deleteRemoteConfirm = f} type='confirm' confirm={this.onDeleteRemote}/>
+            <MessageBox ref={f => this.tip = f} />
         </div>;
     }
 }

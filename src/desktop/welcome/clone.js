@@ -32,12 +32,12 @@ class CloneContent extends React.Component {
     }
 
     render () {
-        return <Form labelWidth={120} ref={f => this.form = f}>
+        return <Form labelWidth={145} ref={f => this.form = f}>
             <div>
-                <FormControl itemStyle={{width: 300}} ref={f => this.url = f} type='text' name='url' label='Repository URL: ' required/>
+                <FormControl itemStyle={{width: 400}} ref={f => this.url = f} type='text' name='url' label='Repository URL: ' required/>
             </div>
             <div>
-                <FormControl itemStyle={{width: 300}} ref={f => this.dir = f} type='text' name='dir' label='Dir: ' required suffix={<Button theme='primary' onClick={this.selectFile}>Dir</Button>}/>
+                <FormControl itemStyle={{width: 400}} ref={f => this.dir = f} type='text' name='dir' label='Dir: ' required suffix={<Button theme='primary' onClick={this.selectFile}>Dir</Button>}/>
             </div>
         </Form>;
     }

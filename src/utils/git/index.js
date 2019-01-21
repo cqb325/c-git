@@ -249,6 +249,22 @@ class GitClient {
         return ret;
     }
 
+    /**
+     * 获取远程信息
+     * @param {*} name 
+     */
+    async getRemote (name) {
+        const repo = new GitRepo(this.dir, this.credentials);
+        let remote;
+        try {
+            await repo.open();
+            remote = await repo.getRemote(name);
+        } finally {
+            repo.free();
+        }
+        return remote;
+    }
+
     async getTags () {
         const repo = new GitRepo(this.dir, this.credentials);
         let ret;
@@ -390,6 +406,30 @@ class GitClient {
         return ret;
     }
 
+    async stashDrop (index) {
+        const repo = new GitRepo(this.dir, this.credentials);
+        let ret;
+        try {
+            await repo.open();
+            ret = await repo.stashDrop(index);
+        } finally {
+            repo.free();
+        }
+        return ret;
+    }
+
+    async stashApply (index) {
+        const repo = new GitRepo(this.dir, this.credentials);
+        let ret;
+        try {
+            await repo.open();
+            ret = await repo.stashApply(index);
+        } finally {
+            repo.free();
+        }
+        return ret;
+    }
+
     async getIndexFiles () {
         const repo = new GitRepo(this.dir, this.credentials);
         let ret;
@@ -480,6 +520,30 @@ class GitClient {
         try {
             await repo.open();
             ret = await repo.review(branchName);
+        } finally {
+            repo.free();
+        }
+        return ret;
+    }
+
+    async deleteRemote (refName) {
+        const repo = new GitRepo(this.dir, this.credentials);
+        let ret;
+        try {
+            await repo.open();
+            ret = await repo.deleteRemote(refName);
+        } finally {
+            repo.free();
+        }
+        return ret;
+    }
+
+    async setRemoteURL (remoteName, url) {
+        const repo = new GitRepo(this.dir, this.credentials);
+        let ret;
+        try {
+            await repo.open();
+            ret = await repo.setRemoteURL(remoteName, url);
         } finally {
             repo.free();
         }

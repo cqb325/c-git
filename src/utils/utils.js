@@ -19,6 +19,10 @@ export default class Utils {
         cp.spawn('cmd', ['/c', 'start', 'pushd', dir]);
     }
 
+    static deleteFile (dir, filePath) {
+        fs.unlinkSync(path.join(dir, filePath));
+    }
+
     /**
      * 将目录加入到gitignore文件中
      * @param {*} dir 

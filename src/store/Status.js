@@ -68,6 +68,10 @@ export default class Repo {
         return await this.client.commit(message, states);
     }
 
+    async removeFile (filePath) {
+        await this.client.remove(filePath);
+    }
+
     async getIndexFiles () {
         return await this.client.getIndexFiles();
     }

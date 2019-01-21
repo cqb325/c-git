@@ -52,6 +52,7 @@ class CommitInfo extends React.Component {
     }
     
     componentDidMount () {
+        this.props.bind(this);
         this.props.commit.setCwd(this.props.repo.cwd);
 
         document.addEventListener('contextmenu', this.contextMenu, false);

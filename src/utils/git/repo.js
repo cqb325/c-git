@@ -19,6 +19,7 @@ const {
     Checkout,
     Revwalk,
     Ignore,
+    Remote,
     AnnotatedCommit,
     Reference
 } = nodegit;
@@ -567,7 +568,8 @@ class Repo {
                     remoteOffset = ret.remoteOffset;
                     sameCommit = ret.sameCommit;
                     ret = null;
-                } catch (e) { e; }
+                } catch (e) { e; console.log(e);
+                }
 
                 branches.push({
                     ref: ref.name(),
@@ -575,6 +577,7 @@ class Repo {
                     head: !!ref.isHead(),
                     localOffset,
                     remoteOffset,
+                    isTracked: !!remote,
                     sameCommit,
                     remote: remote ? remote.shorthand().replace(`/${ref.shorthand()}`, '') : '',
                     target: ref.target().toString()
@@ -1015,6 +1018,14 @@ class Repo {
         return await Stash.pop(this.rawRepo, index);
     }
 
+    async stashDrop (index) {
+        return await Stash.drop(this.rawRepo, index);
+    }
+
+    async stashApply (index) {
+        return await Stash.apply(this.rawRepo, index);
+    }
+
     async getIndexFiles () {
         const index = await this.rawRepo.refreshIndex();
         const entries = index.entries();
@@ -1102,6 +1113,11 @@ class Repo {
         await this.rawRepo.deleteTagByName(name);
     }
 
+    async deleteRemote (refName) {
+        const ref = await this.rawRepo.getBranch(refName);
+        await Branch.delete(ref);
+    }
+
     async getRemoteName (ref) {
         const branch = await this.rawRepo.getBranch(ref);
         try {
@@ -1128,6 +1144,10 @@ class Repo {
                 }
             });
         });
+    }
+
+    async setRemoteURL (remoteName, url) {
+        await Remote.setUrl(this.rawRepo, remoteName, url);
     }
 
     istextfile ( filepath, length ) {

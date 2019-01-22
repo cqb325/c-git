@@ -549,6 +549,18 @@ class GitClient {
         }
         return ret;
     }
+
+    async getFileBlob (sha1, filePath) {
+        const repo = new GitRepo(this.dir, this.credentials);
+        let ret;
+        try {
+            await repo.open();
+            ret = await repo.getFileBlob(sha1, filePath);
+        } finally {
+            repo.free();
+        }
+        return ret;
+    }
 }
 
 GitClient.GitRepo = GitRepo;

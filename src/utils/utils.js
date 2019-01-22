@@ -224,4 +224,8 @@ export default class Utils {
             return false;
         }
     }
+
+    static writeFile (data, targetPath) {
+        fs.writeFileSync(targetPath, data);
+    }
 }

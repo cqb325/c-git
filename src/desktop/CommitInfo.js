@@ -1,12 +1,14 @@
 import React from 'react';
 import UUID from 'r-cmui/components/utils/UUID';
 import Dom from 'r-cmui/components/utils/Dom';
+import Notification from 'r-cmui/components/Notification';
 import utils from '../utils/utils';
 const path = require('path');
 import { inject, observer } from 'mobx-react';
 import { toJS } from 'mobx';
 
 const {remote, clipboard, ipcRenderer} = require('electron');
+const {dialog} = remote;
 const SysMenu = remote.Menu;
 const MenuItem = remote.MenuItem;
 
@@ -47,6 +49,10 @@ class CommitInfo extends React.Component {
             menu.append(new MenuItem({label: 'Copy Relative Path', click: () => {
                 clipboard.writeText(ele.data('dir'));
             }}));
+            menu.append(new MenuItem({label: 'Save as', click: () => {
+                const filePath = ele.data('path');
+                this.choiceDir(commit.sha(), filePath);
+            }}));
             menu.popup(remote.getCurrentWindow());
         }
     }
@@ -56,6 +62,29 @@ class CommitInfo extends React.Component {
         this.props.commit.setCwd(this.props.repo.cwd);
 
         document.addEventListener('contextmenu', this.contextMenu, false);
+    }
+
+    choiceDir (sha1, filePath) {
+        dialog.showOpenDialog({
+            title: '选择保存目录',
+            properties: ['openDirectory']
+        }, (filePaths) => {
+            if (filePaths) {
+                this.saveFileAs(sha1, filePath, filePaths[0]);
+            }
+        });
+    }
+
+    async saveFileAs (sha1, filePath, targetDir) {
+        try {
+            await this.props.commit.saveFileAs(sha1, filePath, targetDir);
+        } catch (e) {
+            Notification.error({
+                title: 'Save file error',
+                desc: e.message,
+                theme: 'danger'
+            });
+        }
     }
 
     getCommitFileDiffText (id, filePath) {

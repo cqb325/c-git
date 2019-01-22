@@ -1150,6 +1150,29 @@ class Repo {
         await Remote.setUrl(this.rawRepo, remoteName, url);
     }
 
+    /**
+     * 获取文件内容
+     * @param {*} sha1 
+     * @param {*} filePath 
+     */
+    async getFileBlob (sha1, filePath) {
+        const commit = await this.getCommitInfo(sha1);
+        const tree = await commit.commit.getTree();
+        const entry = await tree.getEntry(filePath);
+        const filemode = entry.filemode();
+        
+        // filemode == 0 为不可读
+        if (entry.isFile() && filemode !== 0) {
+            const blob = await entry.getBlob();
+            const content = blob.content();
+            return {
+                name: entry.name(),
+                content
+            };
+        }
+        return null;
+    }
+
     istextfile ( filepath, length ) {
         const fd = fs.openSync( filepath, 'r' );
         length = length || 1000;

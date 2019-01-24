@@ -64,6 +64,10 @@ class CommitInfo extends React.Component {
         document.addEventListener('contextmenu', this.contextMenu, false);
     }
 
+    updateCwd (cwd) {
+        this.props.commit.setCwd(cwd);
+    }
+
     choiceDir (sha1, filePath) {
         dialog.showOpenDialog({
             title: '选择保存目录',

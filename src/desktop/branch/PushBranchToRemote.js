@@ -15,7 +15,7 @@ class PushBranchToRemote extends React.Component {
 
     setData (data) {
         data.remotes.forEach(item => {
-            item.url = '('+item.name+')' + item.url;
+            item.url = `(${item.name})${item.url}`;
         });
         this.setState({data});
     }

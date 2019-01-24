@@ -183,6 +183,9 @@ class History extends React.Component {
 
     onClick = (item) => {
         if (item) {
+            if (this.props.commit.cwd !== this.props.repo.cwd) {
+                this.props.commit.setCwd(this.props.repo.cwd);
+            }
             this.props.commit.getCommitInfo(item.sha1);
         }
     }

@@ -147,6 +147,27 @@ class Welcome extends React.Component {
         this.renameContent.setData(name);
     }
 
+    onRename = (flag) => {
+        if (flag) {
+            if (!this.renameContent.isChanged()) {
+                return true;
+            }
+            if (this.renameContent.isValid()) {
+                const params = this.renameContent.getValue();
+                this.renameConfig(params.name, this.renameContent.orign);
+            }
+            return false;
+        }
+        return true;
+    }
+
+    renameConfig (name, orign) {
+        const item = this.store.get(orign);
+        item.name = name;
+        this.store.set(name, item);
+        this.renameDialog.close();
+    }
+
     render () {
         const data = this.getRepoList();
         return (

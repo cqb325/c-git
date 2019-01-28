@@ -4,6 +4,11 @@ const Configstore = require('configstore');
 const { ipcMain } = electron;
 const path = require('path');
 const os = require('os');
+const fs = require('fs');
+const extend = require('extend');
+const getGitConfigPath = require('git-config-path');
+const parseConfig = require('parse-git-config').sync;
+const nodegit = require('nodegit-flow')(Git);
 const {
     Repository,
     Branch,
@@ -14,7 +19,23 @@ const {
     AnnotatedCommit,
     Stash
 } = Git;
+const {Flow} = nodegit;
 const store = new Configstore('c-git');
+
+function getRepoConfig (dir) {
+    const globalPath = getGitConfigPath('global');
+    
+    let config = {};
+    if (fs.existsSync(globalPath)) {
+        config = parseConfig({cwd: '/', path: globalPath});
+    }
+
+    if (dir) {
+        const newConfig = parseConfig({cwd: dir, path: path.join(dir, '.git', 'config')});
+        extend(true, config, newConfig);
+    }
+    return config;
+}
 
 async function open (dir) {
     const repo = await Repository.open(dir);
@@ -227,6 +248,14 @@ async function getBranches (dir) {
     const branches = [];
     const remotes = [];
     const tags = [];
+    let flows;
+    let flowBranches;
+
+    const config = getRepoConfig(dir);
+    if (config['gitflow "branch"']) {
+        flowBranches = config['gitflow "branch"'];
+        flows = [];
+    }
 
     for (const ref of refs) {
         if (ref.isBranch()) {
@@ -241,19 +270,31 @@ async function getBranches (dir) {
                 remoteOffset = aheadBehind.behind;
             } catch (e) { e; }
 
-            branches.push({
+            const isFeature = ref.shorthand().startsWith('feature/');
+
+            const branch = {
                 ref: ref.name(),
                 name: ref.shorthand(),
                 head: !!ref.isHead(),
                 localOffset,
                 remoteOffset,
                 isTracked: !!remote,
+                isFeature,
                 remote: remote ? remote.shorthand().replace(`/${ref.shorthand()}`, '') : '',
                 target: ref.target().toString()
-            });
-            branches.sort((a, b) => {
-                return a.name <= b.name;
-            });
+            };
+
+            let isFlow = false;
+            for (const b in flowBranches) {
+                if (flowBranches[b] === ref.shorthand()) {
+                    isFlow = true;
+                    flows.push(branch);
+                }
+            }
+
+            if (!isFlow) {
+                branches.push(branch);
+            }
         }
         if (ref.isRemote()) {
             const shorthand = ref.shorthand();
@@ -294,6 +335,16 @@ async function getBranches (dir) {
         }
     }
 
+    branches.sort((a, b) => {
+        return a.name <= b.name;
+    });
+
+    if (flows) {
+        flows.sort((a, b) => {
+            return a.name <= b.name;
+        });
+    }
+
     const stashes = [];
     await Stash.foreach(repo, (index, message, oid) => {
         stashes.push({index, message, oid});
@@ -319,6 +370,7 @@ async function getBranches (dir) {
     
     return {
         branches,
+        flows,
         remotes,
         tags,
         stashes
@@ -387,6 +439,17 @@ async function checkoutRemote (params) {
 
     repo.free();
     repo = null;
+}
+
+async function finishFeature (dir, name, message) {
+    const repo = await open(dir);
+    const commit = await Flow.finishFeature(repo, name, {
+        processMergeMessageCallback: (autoMsg) => {
+            return message || autoMsg;
+        }
+    });
+    repo.free();
+    return commit;
 }
 
 /**
@@ -501,5 +564,15 @@ ipcMain.on('pushToRemote', async (event, params) => {
         event.sender.send('pushToRemote_res', null);
     } catch (e) {
         event.sender.send('pushToRemote_res', e.message);
+    }
+});
+
+ipcMain.on('finishFeature', async (event, dir, name, msg) => {
+    console.log('finishFeature....');
+    try {
+        await finishFeature(dir, name, msg);
+        event.sender.send('finishFeature_res', null);
+    } catch (e) {
+        event.sender.send('finishFeature_res', e.message);
     }
 });

@@ -26,6 +26,7 @@
     "mobx-react-router": "^4.0.3",
     "moment": "^2.22.1",
     "nodegit": "^0.23.0",
+    "nodegit-flow": "^1.0.2",
     "omit.js": "^1.0.0",
     "parse-git-config": "^3.0.0",
     "parse-gitignore": "^1.0.1",

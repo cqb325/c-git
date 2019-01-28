@@ -9,6 +9,7 @@ require('./mainRepo');
 global.Git = Git;
 global.GitResetDefault = Git.Reset.default;
 global.GitResetReset = Git.Reset.reset;
+global.GitMerge = Git.Merge;
 
 
 process.on('uncaughtException', error => {

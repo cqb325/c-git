@@ -285,7 +285,7 @@ class History extends React.Component {
                 if (data) {
                     dg(toJS(data), {
                         tags: branchesData.tags,
-                        branches: branchesData.branches,
+                        branches: branchesData.flows ? branchesData.branches.concat(branchesData.flows) : branchesData.branches,
                         remotes: branchesData.remotes,
                         onClick: this.onClick,
                         finished: () => {

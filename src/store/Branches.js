@@ -1,5 +1,6 @@
 import {observable, action} from 'mobx';
 import GitClient from '../utils/git';
+import GitFlow from '../utils/git/git-flow';
 export default class Branches {
     @observable selectedNode = null;
     @observable selectedSubNode = null;
@@ -132,6 +133,12 @@ export default class Branches {
 
     async setRemoteURL (data) {
         await this.client.setRemoteURL(data.name, data.url);
+    }
+
+    async finishFeature (params) {
+        const gitFlow = new GitFlow(this.cwd);
+        await gitFlow.init();
+        await gitFlow.finishFeature(params);
     }
 
     @action

@@ -9,6 +9,7 @@ import SetTrackedBranch from './branch/SetTrackedBranch';
 import CheckoutRemoteBranch from './branch/CheckoutRemoteBranch';
 import PushBranchToRemote from './branch/PushBranchToRemote';
 import PropertyContent from './branch/PropertyContent';
+import FinishFeatureContent from './flow/FinishFeatureContent';
 import utils from '../utils/utils';
 
 const {remote, ipcRenderer} = require('electron');
@@ -100,6 +101,12 @@ class Branches extends React.Component {
                         this.openPushToDialog(ref, name);
                     }}));
             }
+            if (type === 'feature') {
+                menu.append(new MenuItem({label: 'Finish Feature', click: () => {
+                    const name = ele.data('name');
+                    this.openFinishFeatureDialog(name);
+                }}));
+            }
             if (type === 'tag') {
                 menu.append(new MenuItem({label: 'Check Out', click: () => {
                     const name = ele.data('name');
@@ -146,7 +153,6 @@ class Branches extends React.Component {
             remoteEle = remoteEle ? Dom.dom(remoteEle) : null;
             const type = ele ? ele.data('type') : null;
             const remoteType = remoteEle ? remoteEle.data('type') : null;
-            console.log(remoteType);
             
             if (type === 'local') {
                 menu.append(new MenuItem({label: 'Add Branch', click: () => {
@@ -182,6 +188,47 @@ class Branches extends React.Component {
         }
 
         document.addEventListener('contextmenu', this.contextMenu, false);
+    }
+
+    openFinishFeatureDialog (name) {
+        this.finishFeatureContent.setName(name);
+        this.finishFeatureDialog.open();
+        this.finishFeatureDialog.setData(name);
+    }
+
+    onFinishFeature = (flag) => {
+        if (flag) {
+            if (this.finishFeatureContent.isValid()) {
+                this.finishFeatureDialog.showLoading();
+                const featureName = this.finishFeatureDialog.getData();
+                const params = this.finishFeatureContent.getValue();
+                params.name = featureName;
+                this.finishFeature(params);
+            }
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * 结束feature
+     * @param {*} params 
+     */
+    async finishFeature (params) {
+        try {
+            await this.props.branches.finishFeature(params);
+        } catch (e) {
+            console.log(e);
+            
+            Notification.error({
+                title: 'Finish Feature Error',
+                desc: e.message,
+                theme: 'danger'
+            });
+        } finally {
+            this.finishFeatureDialog.hideLoading();
+            this.finishFeatureDialog.close();
+        }
     }
 
     /**
@@ -655,8 +702,14 @@ class Branches extends React.Component {
         const branchData = toJS(data);
         const ret = [];
         const local = this.renderLocal(branchData.branches);
+        const flow = this.renderFlow(branchData.flows);
         const remotes = this.renderRemotes(branchData.remotes);
-        ret.push(local);
+        if (flow) {
+            ret.push(flow);
+        }
+        if (local) {
+            ret.push(local);
+        }
         ret.push(remotes);
         if (branchData.tags && branchData.tags.length) {
             const tags = this.renderTags(branchData.tags);
@@ -670,8 +723,58 @@ class Branches extends React.Component {
     }
 
     renderLocal (branches) {
+        if (!branches || !branches.length) {
+            return null;
+        }
         const {selectedSubNode} = this.props.branches;
         return <Accordion.Item key='LOCAL' title='LOCAL' icon='desktop' dataType='local' suffix={<span style={{fontSize: 11, color: '#8080AD'}}>{branches.length}</span>} open>
+            {
+                branches.map(branch => {
+                    const active = branch.ref === selectedSubNode;
+                    return <div key={branch.ref}>
+                        <div className={`branches-sub-node ${active ? 'active' : ''} ${branch.isTracked ? '' : 'no-track'}`}
+                            data-type={branch.isFeature ? 'feature' : 'local'}
+                            data-ref={branch.ref}
+                            data-name={branch.name}
+                            data-index={branch.index}
+                            data-target={branch.target}
+                            data-remote={branch.remote}
+                        >
+                            <span className='branches-arrow-node'></span>
+                            <span className='branches-icon'></span>
+                            <span>{branch.name}</span>
+                            <span className='pull-right mr-10' style={{fontSize: 9, fontWeight: 400}}>
+                                {
+                                    branch.localOffset
+                                        ? <span>
+                                            <span style={{marginRight: 2, color: '#8080AD'}}>{branch.localOffset}</span>
+                                            <i className='zmdi zmdi-arrow-right-top mr-5' style={{color: '#8080AD'}}></i>
+                                        </span>
+                                        : null
+                                }
+                                {
+                                    branch.remoteOffset
+                                        ? <span>
+                                            <i className='zmdi zmdi-arrow-left-bottom' style={{color: '#E9C341'}}></i>
+                                            <span style={{marginLeft: 2, color: '#E9C341'}}>{branch.remoteOffset}</span>
+                                        </span>
+                                        : null
+                                }
+                                
+                            </span>
+                        </div>
+                    </div>;
+                })
+            }
+        </Accordion.Item>;
+    }
+
+    renderFlow (branches) {
+        if (!branches) {
+            return null;
+        }
+        const {selectedSubNode} = this.props.branches;
+        return <Accordion.Item key='FLOW' title='FLOW' icon='leaf' dataType='flow' suffix={<span style={{fontSize: 11, color: '#8080AD'}}>{branches.length}</span>} open>
             {
                 branches.map(branch => {
                     const active = branch.ref === selectedSubNode;
@@ -841,6 +944,13 @@ class Branches extends React.Component {
                 title='Properties'
                 onConfirm={this.onChangeRemoteURL}
                 content={<PropertyContent ref={f => this.propertyContent = f}/>}
+            />
+
+            <Dialog ref={f => this.finishFeatureDialog = f}
+                title='Finish Feature'
+                okButtonText='Finish'
+                onConfirm={this.onFinishFeature}
+                content={<FinishFeatureContent ref={f => this.finishFeatureContent = f}/>}
             />
 
             <MessageBox ref={f => this.deleteConfirm = f} type='confirm' confirm={this.deleteBranch}/>

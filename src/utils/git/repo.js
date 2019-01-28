@@ -3,6 +3,9 @@ const os = require('os');
 const path = require('path');
 const fs = require('fs');
 const nodegit = remote.getGlobal('Git');
+const flowgit = require('nodegit-flow')(nodegit);
+const {Flow} = flowgit;
+
 const GitResetDefault = remote.getGlobal('GitResetDefault');
 const simpleGit = require('simple-git');
 import gitConfig from './git-config';
@@ -635,6 +638,40 @@ class Repo {
         };
     }
 
+    /**
+     * features 分支
+     */
+    async getFeatures () {
+        const refs = await this.rawRepo.getReferences(Reference.TYPE.OID);
+        const isInitialized = await Flow.isInitialized(this.rawRepo);
+        const features = {};
+        if (!isInitialized) {
+            return features;
+        }
+        const config = await Flow.getConfig(this.rawRepo);
+        const featurePrefix = config['gitflow.prefix.feature'];
+        for (const ref of refs) {
+            if (ref.isBranch()) {
+                const name = ref.shorthand();
+                if (name.indexOf(featurePrefix) === 0) {
+                    features[name.replace(featurePrefix, '')] = true;
+                }
+            }
+        }
+        return features;
+    }
+
+    /**
+     * 创建一个新的feature分支
+     * @param {*} name 
+     */
+    async startFeature (name) {
+        const headCommit = await this.rawRepo.getHeadCommit();
+        await Flow.startFeature(this.rawRepo, name, {
+            sha: headCommit.sha()
+        });
+    }
+
     async getCommitHistory () {
         const ref = await this.rawRepo.getCurrentBranch();
         let upstream;
@@ -655,15 +692,19 @@ class Repo {
                 localTime = headCommit.time();
                 const commits = await this.getBranchCommitHistory(ref);
                 rets = commits;
-                rets.forEach(item => {
-                    item.isLocal = true;
+                rets = rets.map(item => {
+                    const obj = this.getCommitSerilize(item);
+                    obj.isLocal = true;
+                    return obj;
                 });
             } else if (!headCommit && upHeadCommit) {
                 remoteTime = upHeadCommit.time();
                 upCommits = await this.getBranchCommitHistory(upstream);
                 rets = upCommits;
-                rets.forEach(item => {
-                    item.circleLocal = true;
+                rets = rets.map(item => {
+                    const obj = this.getCommitSerilize(item);
+                    obj.isRemote = true;
+                    return obj;
                 });
             } else {
                 const key = `${this.dir}:${ref.name()}:${upstream.name()}`;
@@ -689,6 +730,7 @@ class Repo {
                     const commit = await this.getBranchHeadCommit(ref);
                     startSha = commit.sha();
                 }
+
                 if (aheadbehind.behind) {
                     upCommits = await this.getBranchCommitHistory(upstream, aheadbehind.behind);
                     upCommits = upCommits.map(item => {
@@ -727,13 +769,20 @@ class Repo {
                     };
                     await this.getCommitPage(startSha, data);
                     stageCommits = data.commits;
+                    // 不应该没有数据  说明是一个初始化的repo
+                    if (!stageCommits.length) {
+                        stageCommits = [headCommit];
+                    }
 
                     stageCommits = stageCommits.map(item => {
                         return this.getCommitSerilize(item);
                     });
+                    
                     const same = stageCommits[0];
-                    same.isLocal = true;
-                    same.isSameNode = true;
+                    if (same) {
+                        same.isLocal = true;
+                        same.isSameNode = true;
+                    }
 
                     store.set(key, JSON.stringify(stageCommits));
                 }
@@ -757,8 +806,10 @@ class Repo {
             rets = await this.getBranchCommitHistory(ref);
             const headCommit = await this.getBranchHeadCommit(ref);
             if (headCommit) {
-                rets.forEach(item => {
-                    item.isLocal = true;
+                rets = rets.map(item => {
+                    const obj = this.getCommitSerilize(item);
+                    obj.isLocal = true;
+                    return obj;
                 });
             }
         }

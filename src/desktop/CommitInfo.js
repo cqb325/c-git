@@ -2,6 +2,7 @@ import React from 'react';
 import UUID from 'r-cmui/components/utils/UUID';
 import Dom from 'r-cmui/components/utils/Dom';
 import Notification from 'r-cmui/components/Notification';
+import FontIcon from 'r-cmui/components/FontIcon';
 import utils from '../utils/utils';
 const path = require('path');
 import { inject, observer } from 'mobx-react';
@@ -161,7 +162,9 @@ class CommitInfo extends React.Component {
             return <div style={{height: '100%', overflow: 'auto'}} className='commit-wrap'>
                 <div className='commit-header'>
                     <span>{commit.sha().substr(0, 8)}</span>
-                    <span className='commit-close' onClick={this.close}>x</span>
+                    <span className='commit-close' title='close' onClick={this.close}>
+                        <FontIcon icon='long-arrow-right'/>
+                    </span>
                 </div>
                 <div className='mt-10' style={{paddingLeft: 5}}>Message: </div>
                 <div className='commit-info'>

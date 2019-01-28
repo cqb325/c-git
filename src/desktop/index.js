@@ -13,6 +13,8 @@ import Welcome from './welcome';
 import CreateContent from './welcome/create';
 import CloneContent from './welcome/clone';
 import AboutContent from './welcome/about';
+import FlowConfigContent from './flow/FlowConfigContent';
+import StartFeatureContent from './flow/StartFeatureContent';
 import Head from './Head';
 import Footer from './Footer';
 import utils from '../utils/utils';
@@ -251,6 +253,10 @@ class Desktop extends React.Component {
         this.commitInfo = ref;
     }
 
+    bindHead = (ref) => {
+        this.head = ref;
+    }
+
     onCommit = () => {
         this.history.refresh();
     }
@@ -397,6 +403,25 @@ class Desktop extends React.Component {
         this.aboutDialog.open();
     }
 
+    openFlowConfigDialog () {
+        this.flowConfigDialog.open();
+    }
+
+    closeFlowConfigDialog = (update) => {
+        if (this.head && update) {
+            this.head.updateRecents();
+        }
+        this.flowConfigDialog.close();
+    }
+
+    updateFlowConfigDialog = () => {
+        this.flowConfigDialog.open();
+    }
+
+    openStartFeatureDialog = () => {
+        this.startFeatureDialog.open();
+    }
+
     onCommand = (command, data) => {
         if (command === 'open') {
             this.openRepo();
@@ -415,17 +440,25 @@ class Desktop extends React.Component {
         }
         if (command === 'open_repo') {
             this.onSelectRepoItem(data);
-            this.head.updateRecents();
+            if (this.head) {
+                this.head.updateRecents();
+            }
         }
         if (command === 'about') {
             this.openAboutDialog();
+        }
+        if (command === 'flow-config') {
+            this.openFlowConfigDialog();
+        }
+        if (command === 'flow-start-feature') {
+            this.openStartFeatureDialog();
         }
     }
 
     render () {
         console.log('render index...');
         const {cwd, historyFile} = this.props.repo;
-        const head = <Head onCommand={this.onCommand} ref={f => this.head = f}/>;
+        const head = <Head onCommand={this.onCommand} bind={this.bindHead}/>;
         if (!cwd) {
             return <Layout>
                 {head}
@@ -479,6 +512,17 @@ class Desktop extends React.Component {
 
                     <Dialog ref={f => this.aboutDialog = f} title='About C-Git' useDefaultFooters={false}
                         content={<AboutContent />}/>
+
+                    <Dialog ref={f => this.flowConfigDialog = f} title='Configure Git-Flow' useDefaultFooters={false}
+                        content={<FlowConfigContent cwd={this.props.repo.cwd}
+                            onClose={this.closeFlowConfigDialog}
+                            onUpdate={this.updateFlowConfigDialog}
+                        />}/>
+
+                    <Dialog ref={f => this.startFeatureDialog = f} title='Start Feature' useDefaultFooters={false}
+                        content={<StartFeatureContent onClose={() => {
+                            this.startFeatureDialog.close();
+                        }} cwd={this.props.repo.cwd}/>} />
                 </Layout>
             </Content>
             <Footer />

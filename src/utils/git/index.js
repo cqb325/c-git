@@ -229,6 +229,30 @@ class GitClient {
         return branches;
     }
 
+    async getFeatures () {
+        const repo = new GitRepo(this.dir, this.credentials);
+        let features;
+        try {
+            await repo.open();
+            features = await repo.getFeatures();
+        } finally {
+            repo.free();
+        }
+        return features;
+    }
+
+    async startFeature (name) {
+        const repo = new GitRepo(this.dir, this.credentials);
+        let feature;
+        try {
+            await repo.open();
+            feature = await repo.startFeature(name);
+        } finally {
+            repo.free();
+        }
+        return feature;
+    }
+
     async getRemotes () {
         const repo = new GitRepo(this.dir, this.credentials);
         let remotes;

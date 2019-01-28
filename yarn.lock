@@ -5455,6 +5455,10 @@ node-pre-gyp@^0.11.0:
     semver "^5.3.0"
     tar "^4"
 
+nodegit-flow@^1.0.2:
+  version "1.0.2"
+  resolved "http://registry.npm.taobao.org/nodegit-flow/download/nodegit-flow-1.0.2.tgz#66c9ab87e01a684127e4a1f57e9fcbadd67fe387"
+
 nodegit-promise@~4.0.0:
   version "4.0.0"
   resolved "http://registry.npm.taobao.org/nodegit-promise/download/nodegit-promise-4.0.0.tgz#5722b184f2df7327161064a791d2e842c9167b34"

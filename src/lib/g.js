@@ -282,6 +282,9 @@ function GitGragh() {
                 path.setAttribute("stroke-dasharray", "3,3,3,3,3,3,3,3,3,3,3");
                 path.setAttribute("stroke", "#AAAAAA");
             }
+            if(my.isLocal && targetCommit.isLocal){
+                path.setAttribute("stroke-dasharray", "3,3,3,3,3,3,3,3,3,3,3");
+            }
         };
 
         my.curveLeft = function (pos, distanceAcross) {
@@ -299,6 +302,9 @@ function GitGragh() {
             if(my.isRemote){
                 path.setAttribute("stroke-dasharray", "3,3,3,3,3,3,3,3,3,3,3");
                 path.setAttribute("stroke", "#AAAAAA");
+            }
+            if(my.isLocal){
+                path.setAttribute("stroke-dasharray", "3,3,3,3,3,3,3,3,3,3,3");
             }
         };
 

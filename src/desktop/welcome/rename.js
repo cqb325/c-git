@@ -7,11 +7,17 @@ class Comp extends React.Component {
     displayName = 'Comp';
 
     setData (name) {
+        this.orign = name;
         this.name.setValue(name);
     }
 
     isValid () {
         return this.form.isValid();
+    }
+
+    isChanged () {
+        const params = this.form.getFormParams();
+        return params.name !== this.orign;
     }
 
     getValue () {

@@ -124,6 +124,29 @@ export default class Utils {
         return config;
     }
 
+    /**
+     * 是否存在flow分支
+     * @param {*} dir 
+     */
+    static hasFlowBranches (dir) {
+        const config = this.getRepoConfig(dir);
+        return !!config['gitflow "branch"'];
+    }
+
+    static removeGitFlowConfig (dir, callback) {
+        const configPath = gitConfigPath({cwd: dir});
+        const cfg = parseConfig({cwd: configPath, path: configPath});
+        for (const key in cfg) {
+            if (key.indexOf('gitflow') !== -1) {
+                delete cfg[key];
+            }
+        }
+        fs.writeFileSync(configPath, ini.stringify(cfg, {whitespace: true}));
+        if (callback) {
+            callback();
+        }
+    }
+
     static saveConfig (dir, params) {
         const store = new Configstore('c-git');
         const item = Utils.getItemByPath(store, dir);

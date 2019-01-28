@@ -427,3 +427,19 @@ circle.remoteCommit{
         border-radius: 2px;
     }
 }
+
+.cm-menu-submenu-title:after{
+    top: 10px;
+}
+
+.devide{
+    &::after{
+        content: '';
+        display: block;
+        border-top: 1px solid #aaa;
+        position: relative;
+        top: -9px;
+        width: 100%;
+        transform: scale(1, 0.3);
+    }
+}

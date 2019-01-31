@@ -770,9 +770,9 @@ class Repo {
                     await this.getCommitPage(startSha, data);
                     stageCommits = data.commits;
                     // 不应该没有数据  说明是一个初始化的repo
-                    if (!stageCommits.length) {
-                        stageCommits = [headCommit];
-                    }
+                    // if (!stageCommits.length) {
+                    //     stageCommits = [upHeadCommit];
+                    // }
 
                     stageCommits = stageCommits.map(item => {
                         return this.getCommitSerilize(item);
@@ -932,11 +932,14 @@ class Repo {
         walker.push(sha);
         walker.sorting(Revwalk.SORT.Time);
         const history = await walker.getCommits(50);
-        const startSha = history.pop().sha();
+        const last = history.pop();
+        const startSha = last.sha();
 
         if (startSha !== sha) {
             data.commits = data.commits.concat(history);
             await this.getCommitPage (startSha, data);
+        } else {
+            data.commits = data.commits.concat(last);
         }
     }
 

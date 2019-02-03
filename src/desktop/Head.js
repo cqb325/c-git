@@ -11,6 +11,8 @@ import close from '../images/close.svg';
 import treeIcon from '../images/tree.svg';
 import helpIcon from '../images/help.svg';
 import startFeatureIcon from '../images/start.svg';
+import startReleaseIcon from '../images/release.svg';
+import startHotfixIcon from '../images/hotfix.svg';
 import aboutIcon from '../images/about.svg';
 import welcomeIcon from '../images/welcome.svg';
 import fileIcon from '../images/file.svg';
@@ -132,6 +134,16 @@ class Head extends React.Component {
                     {
                         hasFlowBranches
                             ? <Menu.Item command='flow-start-feature'><img src={startFeatureIcon} style={{position: 'relative', top: 2, left: -1, marginRight: 2}}/>Start Feature</Menu.Item>
+                            : null
+                    }
+                    {
+                        hasFlowBranches
+                            ? <Menu.Item command='flow-start-release'><img src={startReleaseIcon} style={{width: 12, position: 'relative', top: 2, left: -1, marginRight: 2}}/>Start Release</Menu.Item>
+                            : null
+                    }
+                    {
+                        hasFlowBranches
+                            ? <Menu.Item command='flow-start-hotfix'><img src={startHotfixIcon} style={{width: 12, position: 'relative', top: 2, left: -1, marginRight: 2}}/>Start Hotfix</Menu.Item>
                             : null
                     }
                     <Menu.Item command='flow-config'><FontIcon icon='cog' color='#1CA538'/>Config</Menu.Item>

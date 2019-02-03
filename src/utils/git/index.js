@@ -229,6 +229,18 @@ class GitClient {
         return branches;
     }
 
+    async isPrefixConflict (prefix) {
+        const repo = new GitRepo(this.dir, this.credentials);
+        let features;
+        try {
+            await repo.open();
+            features = await repo.isPrefixConflict(prefix);
+        } finally {
+            repo.free();
+        }
+        return features;
+    }
+
     async getFeatures () {
         const repo = new GitRepo(this.dir, this.credentials);
         let features;
@@ -241,12 +253,36 @@ class GitClient {
         return features;
     }
 
+    async getReleases () {
+        const repo = new GitRepo(this.dir, this.credentials);
+        let features;
+        try {
+            await repo.open();
+            features = await repo.getReleases();
+        } finally {
+            repo.free();
+        }
+        return features;
+    }
+
     async startFeature (name) {
         const repo = new GitRepo(this.dir, this.credentials);
         let feature;
         try {
             await repo.open();
             feature = await repo.startFeature(name);
+        } finally {
+            repo.free();
+        }
+        return feature;
+    }
+
+    async startRelease (name) {
+        const repo = new GitRepo(this.dir, this.credentials);
+        let feature;
+        try {
+            await repo.open();
+            feature = await repo.startRelease(name);
         } finally {
             repo.free();
         }

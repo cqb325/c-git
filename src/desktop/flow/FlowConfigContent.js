@@ -4,6 +4,8 @@ import GitFlow from '../../utils/git/git-flow';
 import Button from 'r-cmui/components/Button';
 import Form from 'r-cmui/components/Form';
 import FormControl from 'r-cmui/components/FormControl';
+import Notification from 'r-cmui/components/Notification';
+import GitClient from '../../utils/git';
 
 class FlowConfigContent extends React.Component {
     displayName = 'FlowConfigContent';
@@ -35,6 +37,7 @@ class FlowConfigContent extends React.Component {
     }
 
     async componentDidMount () {
+        this.client = new GitClient(this.props.cwd);
         const gitFlow = new GitFlow(this.props.cwd);
         this.gitFlow = gitFlow;
         await gitFlow.init();
@@ -51,8 +54,22 @@ class FlowConfigContent extends React.Component {
         }
     }
 
-    initGitFlow = () => {
+    initGitFlow = async () => {
         const params = this.form.getFormParams();
+        const result = this.gitFlow.validateConfig(params);
+        if (result !== 0) {
+            return ;
+        }
+        
+        const isPrefixConflict = await this.client.isPrefixConflict(params);
+        if (isPrefixConflict) {
+            Notification.error({
+                title: 'conflict',
+                desc: 'prefix is conflict with local branch',
+                theme: 'danger'
+            });
+            return;
+        }
         this.gitFlow.install(params);
         this.close(true);
         window.setTimeout(() => {

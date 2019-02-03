@@ -58,6 +58,10 @@ class GitFlow {
             });
         });
     }
+
+    validateConfig (params) {
+        return Flow.validateConfig(params);
+    }
 }
 
 export default GitFlow;

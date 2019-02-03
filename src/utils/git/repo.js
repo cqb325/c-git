@@ -641,6 +641,25 @@ class Repo {
     /**
      * features 分支
      */
+    async isPrefixConflict (params) {
+        const refs = await this.rawRepo.getReferences(Reference.TYPE.OID);
+        for (const ref of refs) {
+            if (ref.isBranch()) {
+                const name = ref.shorthand();
+                const prefixFeature = params['gitflow.prefix.feature'];
+                const prefixRelease = params['gitflow.prefix.release'];
+                const prefixHotfix = params['gitflow.prefix.hotfix'];
+                if (`${name}/` === prefixFeature || `${name}/` === prefixRelease || `${name}/` === prefixHotfix) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
+     * features 分支
+     */
     async getFeatures () {
         const refs = await this.rawRepo.getReferences(Reference.TYPE.OID);
         const isInitialized = await Flow.isInitialized(this.rawRepo);
@@ -662,12 +681,46 @@ class Repo {
     }
 
     /**
+     * release 分支
+     */
+    async getReleases () {
+        const refs = await this.rawRepo.getReferences(Reference.TYPE.OID);
+        const isInitialized = await Flow.isInitialized(this.rawRepo);
+        const data = {};
+        if (!isInitialized) {
+            return data;
+        }
+        const config = await Flow.getConfig(this.rawRepo);
+        const featurePrefix = config['gitflow.prefix.release'];
+        for (const ref of refs) {
+            if (ref.isBranch()) {
+                const name = ref.shorthand();
+                if (name.indexOf(featurePrefix) === 0) {
+                    data[name.replace(featurePrefix, '')] = true;
+                }
+            }
+        }
+        return data;
+    }
+
+    /**
      * 创建一个新的feature分支
      * @param {*} name 
      */
     async startFeature (name) {
         const headCommit = await this.rawRepo.getHeadCommit();
         await Flow.startFeature(this.rawRepo, name, {
+            sha: headCommit.sha()
+        });
+    }
+
+    /**
+     * 创建一个新的release分支
+     * @param {*} version 
+     */
+    async startRelease (version) {
+        const headCommit = await this.rawRepo.getHeadCommit();
+        await Flow.startRelease(this.rawRepo, version, {
             sha: headCommit.sha()
         });
     }

@@ -15,6 +15,8 @@ import CloneContent from './welcome/clone';
 import AboutContent from './welcome/about';
 import FlowConfigContent from './flow/FlowConfigContent';
 import StartFeatureContent from './flow/StartFeatureContent';
+import StartReleaseContent from './flow/StartReleaseContent';
+import StartHotfixContent from './flow/StartHotfixContent';
 import Head from './Head';
 import Footer from './Footer';
 import utils from '../utils/utils';
@@ -422,6 +424,14 @@ class Desktop extends React.Component {
         this.startFeatureDialog.open();
     }
 
+    openStartReleaseDialog = () => {
+        this.startReleaseDialog.open();
+    }
+
+    openStartHotfixDialog = () => {
+        this.startHotfixDialog.open();
+    }
+
     onCommand = (command, data) => {
         if (command === 'open') {
             this.openRepo();
@@ -452,6 +462,12 @@ class Desktop extends React.Component {
         }
         if (command === 'flow-start-feature') {
             this.openStartFeatureDialog();
+        }
+        if (command === 'flow-start-release') {
+            this.openStartReleaseDialog();
+        }
+        if (command === 'flow-start-hotfix') {
+            this.openStartHotfixDialog();
         }
     }
 
@@ -522,6 +538,16 @@ class Desktop extends React.Component {
                     <Dialog ref={f => this.startFeatureDialog = f} title='Start Feature' useDefaultFooters={false}
                         content={<StartFeatureContent onClose={() => {
                             this.startFeatureDialog.close();
+                        }} cwd={this.props.repo.cwd}/>} />
+
+                    <Dialog ref={f => this.startReleaseDialog = f} title='Start Release' useDefaultFooters={false}
+                        content={<StartReleaseContent onClose={() => {
+                            this.startReleaseDialog.close();
+                        }} cwd={this.props.repo.cwd}/>} />
+
+                    <Dialog ref={f => this.startHotfixDialog = f} title='Start Hotfix' useDefaultFooters={false}
+                        content={<StartHotfixContent onClose={() => {
+                            this.startHotfixDialog.close();
                         }} cwd={this.props.repo.cwd}/>} />
                 </Layout>
             </Content>

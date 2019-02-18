@@ -11,7 +11,7 @@ class AboutContent extends React.Component {
             <div className='mt-45 text-center' style={{width: 500}}>
                 <img src={logo} style={{width: 64}}/>
                 <div>C-GIT (v0.1.0)</div>
-                <div>copyright &copy; cqb325@163.com</div>
+                <div>copyright <span style={{fontSize: 18, verticalAlign: 'top'}}>&copy;</span> cqb325@163.com</div>
             </div>
             <div className='mb-30 mt-30 text-center'>
                 <span>

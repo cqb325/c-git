@@ -109,9 +109,9 @@ class Head extends React.Component {
     }
 
     render () {
-        if (!this.props.repo.cwd) {
-            return null;
-        }
+        // if (!this.props.repo.cwd) {
+        //     return null;
+        // }
         console.log('render head...');
         const hasFlowBranches = utils.hasFlowBranches(this.props.repo.cwd);
         return <Header style={{height: 35, padding: '0 0 0 15px', lineHeight: '35px', background: '#333333', userSelect: 'none', '-webkitAppRegion': 'drag', textAlign: 'center'}}>

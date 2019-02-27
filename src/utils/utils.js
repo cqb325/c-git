@@ -129,12 +129,8 @@ export default class Utils {
      * @param {*} dir 
      */
     static hasFlowBranches (dir) {
-        if (dir) {
-            const config = this.getRepoConfig(dir);
-            return !!config['gitflow "branch"'];
-        } else {
-            return false;
-        }
+        const config = this.getRepoConfig(dir);
+        return !!config['gitflow "branch"'];
     }
 
     static removeGitFlowConfig (dir, callback) {

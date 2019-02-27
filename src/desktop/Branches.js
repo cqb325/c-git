@@ -102,9 +102,51 @@ class Branches extends React.Component {
                     }}));
             }
             if (type === 'feature') {
+                menu.append(new MenuItem({label: 'Check Out', click: () => {
+                    const name = ele.data('name');
+                    this.checkoutBranch(name, 'local');
+                }}));
+                menu.append(new MenuItem({label: 'Delete', 
+                    enabled: !ele.hasClass('active'),
+                    click: () => {
+                        const name = ele.data('name');
+                        this.openDeleteConfirm(name, 'local');
+                    }}));
                 menu.append(new MenuItem({label: 'Finish Feature', click: () => {
                     const name = ele.data('name');
                     this.openFinishFeatureDialog(name);
+                }}));
+            }
+            if (type === 'hotfix') {
+                menu.append(new MenuItem({label: 'Check Out', click: () => {
+                    const name = ele.data('name');
+                    this.checkoutBranch(name, 'local');
+                }}));
+                menu.append(new MenuItem({label: 'Delete', 
+                    enabled: !ele.hasClass('active'),
+                    click: () => {
+                        const name = ele.data('name');
+                        this.openDeleteConfirm(name, 'local');
+                    }}));
+                menu.append(new MenuItem({label: 'Finish HotFix', click: () => {
+                    const name = ele.data('name');
+                    this.openFinishHotFixDialog(name);
+                }}));
+            }
+            if (type === 'release') {
+                menu.append(new MenuItem({label: 'Check Out', click: () => {
+                    const name = ele.data('name');
+                    this.checkoutBranch(name, 'local');
+                }}));
+                menu.append(new MenuItem({label: 'Delete', 
+                    enabled: !ele.hasClass('active'),
+                    click: () => {
+                        const name = ele.data('name');
+                        this.openDeleteConfirm(name, 'local');
+                    }}));
+                menu.append(new MenuItem({label: 'Finish Release', click: () => {
+                    const name = ele.data('name');
+                    this.openFinishReleaseDialog(name);
                 }}));
             }
             if (type === 'tag') {
@@ -228,6 +270,84 @@ class Branches extends React.Component {
         } finally {
             this.finishFeatureDialog.hideLoading();
             this.finishFeatureDialog.close();
+        }
+    }
+
+    openFinishReleaseDialog (name) {
+        this.finishReleaseContent.setName(name);
+        this.finishReleaseDialog.open();
+        this.finishReleaseDialog.setData(name);
+    }
+
+    onFinishRelease = (flag) => {
+        if (flag) {
+            if (this.finishReleaseContent.isValid()) {
+                this.finishReleaseDialog.showLoading();
+                const featureName = this.finishReleaseDialog.getData();
+                const params = this.finishReleaseContent.getValue();
+                params.name = featureName;
+                this.finishRelease(params);
+            }
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * 结束feature
+     * @param {*} params 
+     */
+    async finishRelease (params) {
+        try {
+            await this.props.branches.finishRelease(params);
+        } catch (e) {
+            Notification.error({
+                title: 'Finish Release Error',
+                desc: e.message,
+                theme: 'danger'
+            });
+        } finally {
+            this.finishReleaseDialog.hideLoading();
+            this.finishReleaseDialog.close();
+        }
+    }
+
+    openFinishHotFixDialog (name) {
+        this.finishHotFixContent.setName(name);
+        this.finishHotFixDialog.open();
+        this.finishHotFixDialog.setData(name);
+    }
+
+    onFinishHotFix = (flag) => {
+        if (flag) {
+            if (this.finishHotFixContent.isValid()) {
+                this.finishHotFixDialog.showLoading();
+                const featureName = this.finishHotFixDialog.getData();
+                const params = this.finishHotFixContent.getValue();
+                params.name = featureName;
+                this.finishHotFix(params);
+            }
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * 结束HotFix
+     * @param {*} params 
+     */
+    async finishHotFix (params) {
+        try {
+            await this.props.branches.finishHotFix(params);
+        } catch (e) {
+            Notification.error({
+                title: 'Finish HotFix Error',
+                desc: e.message,
+                theme: 'danger'
+            });
+        } finally {
+            this.finishHotFixDialog.hideLoading();
+            this.finishHotFixDialog.close();
         }
     }
 
@@ -731,9 +851,19 @@ class Branches extends React.Component {
             {
                 branches.map(branch => {
                     const active = branch.ref === selectedSubNode;
+                    let type = 'local';
+                    if (branch.isFeature) {
+                        type = 'feature';
+                    }
+                    if (branch.isRelease) {
+                        type = 'release';
+                    }
+                    if (branch.isHotFix) {
+                        type = 'hotfix';
+                    }
                     return <div key={branch.ref}>
                         <div className={`branches-sub-node ${active ? 'active' : ''} ${branch.isTracked ? '' : 'no-track'}`}
-                            data-type={branch.isFeature ? 'feature' : 'local'}
+                            data-type={type}
                             data-ref={branch.ref}
                             data-name={branch.name}
                             data-index={branch.index}
@@ -950,7 +1080,21 @@ class Branches extends React.Component {
                 title='Finish Feature'
                 okButtonText='Finish'
                 onConfirm={this.onFinishFeature}
-                content={<FinishFeatureContent ref={f => this.finishFeatureContent = f}/>}
+                content={<FinishFeatureContent type='feature' ref={f => this.finishFeatureContent = f}/>}
+            />
+
+            <Dialog ref={f => this.finishReleaseDialog = f}
+                title='Finish Release'
+                okButtonText='Finish'
+                onConfirm={this.onFinishRelease}
+                content={<FinishFeatureContent type='release' ref={f => this.finishReleaseContent = f}/>}
+            />
+
+            <Dialog ref={f => this.finishHotFixDialog = f}
+                title='Finish HotFix'
+                okButtonText='Finish'
+                onConfirm={this.onFinishHotFix}
+                content={<FinishFeatureContent type='hotfix' ref={f => this.finishHotFixContent = f}/>}
             />
 
             <MessageBox ref={f => this.deleteConfirm = f} type='confirm' confirm={this.deleteBranch}/>

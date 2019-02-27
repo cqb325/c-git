@@ -257,6 +257,11 @@ async function getBranches (dir) {
         flows = [];
     }
 
+    let flowConfig = null;
+    if (flows) {
+        flowConfig = await Flow.getConfig(repo);
+    }
+
     for (const ref of refs) {
         if (ref.isBranch()) {
             let remote, remoteOffset = 0;
@@ -270,7 +275,18 @@ async function getBranches (dir) {
                 remoteOffset = aheadBehind.behind;
             } catch (e) { e; }
 
-            const isFeature = ref.shorthand().startsWith('feature/');
+            let isFeature = false;
+            let isRelease = false;
+            let isHotFix = false;
+            if (flowConfig) {
+                const featurePrefix = config['gitflow.prefix.feature'];
+                const releasePrefix = config['gitflow.prefix.release'];
+                const hotfixPrefix = config['gitflow.prefix.hotfix'];
+
+                isFeature = ref.shorthand().startsWith(featurePrefix);
+                isRelease = ref.shorthand().startsWith(releasePrefix);
+                isHotFix = ref.shorthand().startsWith(hotfixPrefix);
+            }
 
             const branch = {
                 ref: ref.name(),
@@ -280,6 +296,8 @@ async function getBranches (dir) {
                 remoteOffset,
                 isTracked: !!remote,
                 isFeature,
+                isRelease,
+                isHotFix,
                 remote: remote ? remote.shorthand().replace(`/${ref.shorthand()}`, '') : '',
                 target: ref.target().toString()
             };
@@ -452,6 +470,28 @@ async function finishFeature (dir, name, message) {
     return commit;
 }
 
+async function finishRelease (dir, name, message) {
+    const repo = await open(dir);
+    const commit = await Flow.finishRelease(repo, name, {
+        processMergeMessageCallback: (autoMsg) => {
+            return message || autoMsg;
+        }
+    });
+    repo.free();
+    return commit;
+}
+
+async function finishHotFix (dir, name, message) {
+    const repo = await open(dir);
+    const commit = await Flow.finishHotfix(repo, name, {
+        processMergeMessageCallback: (autoMsg) => {
+            return message || autoMsg;
+        }
+    });
+    repo.free();
+    return commit;
+}
+
 /**
  * push commits
  */
@@ -520,6 +560,7 @@ ipcMain.on('getBranches', async (event, dir) => {
         const data = await getBranches(dir);
         event.sender.send('getBranches_res', null, data);
     } catch (e) {
+        console.trace(e);
         event.sender.send('getBranches_res', e.message, null);
     }
 });
@@ -574,5 +615,27 @@ ipcMain.on('finishFeature', async (event, dir, name, msg) => {
         event.sender.send('finishFeature_res', null);
     } catch (e) {
         event.sender.send('finishFeature_res', e.message);
+    }
+});
+
+ipcMain.on('finishRelease', async (event, dir, name, msg) => {
+    console.log('finishRelease....');
+    try {
+        await finishRelease(dir, name, msg);
+        event.sender.send('finishRelease_res', null);
+    } catch (e) {
+        console.log(e);
+        event.sender.send('finishRelease_res', e.message);
+    }
+});
+
+ipcMain.on('finishHotFix', async (event, dir, name, msg) => {
+    console.log('finishHotFix....');
+    try {
+        await finishHotFix(dir, name, msg);
+        event.sender.send('finishHotFix_res', null);
+    } catch (e) {
+        console.log(e);
+        event.sender.send('finishHotFix_res', e.message);
     }
 });

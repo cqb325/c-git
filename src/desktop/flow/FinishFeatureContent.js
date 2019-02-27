@@ -22,7 +22,7 @@ class FinishFeatureContent extends React.Component {
     render () {
         return <div>
             <div style={{fontWeight: 700}} className='mb-10'>
-                Finish a feature
+                Finish a {this.props.type}
             </div>
 
             <div className='mt-10 mb-5'>Commit Message:</div>

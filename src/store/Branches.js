@@ -11,17 +11,16 @@ export default class Branches {
             this.cwd = cwd;
             this.client = new GitClient(cwd);
         }
-        // const origns = await this.client.getRemotes();
-        // const brancheData = await this.client.getBranches();
         brancheData.branches.forEach(branche => {
             if (branche.head) {
                 this.setSelectedSubNode(branche.ref);
             }
         });
-        // const data = [];
-        // data.push({
-        //     ref: 'local', name: 'Local Branches', type: 'local', children: brancheData.branches
-        // });
+        brancheData.flows && brancheData.flows.forEach(branche => {
+            if (branche.head) {
+                this.setSelectedSubNode(branche.ref);
+            }
+        });
         const map = {};
         brancheData.remotes.forEach(remote => {
             if (!map[remote.remote]) {
@@ -30,19 +29,6 @@ export default class Branches {
             map[remote.remote].push(remote);
         });
         brancheData.remotes = map;
-        // origns && origns.forEach(origin => {
-        //     data.push({
-        //         ref: `orign_${origin.name}`, type: 'remote', name: origin.name, url: origin.url, children: map[origin.name]
-        //     });
-        // });
-        // data.push({
-        //     ref: 'tags', name: 'Tags', type: 'tag', children: brancheData.tags
-        // });
-        // if (brancheData.stashes && brancheData.stashes.length) {
-        //     data.push({
-        //         ref: 'stashes', name: 'Stashes', type: 'stash', children: brancheData.stashes
-        //     });
-        // }
         this.setData(brancheData);
     }
 
@@ -139,6 +125,18 @@ export default class Branches {
         const gitFlow = new GitFlow(this.cwd);
         await gitFlow.init();
         await gitFlow.finishFeature(params);
+    }
+
+    async finishRelease (params) {
+        const gitFlow = new GitFlow(this.cwd);
+        await gitFlow.init();
+        await gitFlow.finishRelease(params);
+    }
+
+    async finishHotFix (params) {
+        const gitFlow = new GitFlow(this.cwd);
+        await gitFlow.init();
+        await gitFlow.finishHotFix(params);
     }
 
     @action

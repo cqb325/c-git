@@ -5,6 +5,7 @@ const fs = require('fs');
 const nodegit = remote.getGlobal('Git');
 const flowgit = require('nodegit-flow')(nodegit);
 const {Flow} = flowgit;
+const MAX_NUM_COMMITS = 800;
 
 const GitResetDefault = remote.getGlobal('GitResetDefault');
 const simpleGit = require('simple-git');
@@ -704,6 +705,29 @@ class Repo {
     }
 
     /**
+     * release 分支
+     */
+    async getHotfixs () {
+        const refs = await this.rawRepo.getReferences(Reference.TYPE.OID);
+        const isInitialized = await Flow.isInitialized(this.rawRepo);
+        const data = {};
+        if (!isInitialized) {
+            return data;
+        }
+        const config = await Flow.getConfig(this.rawRepo);
+        const featurePrefix = config['gitflow.prefix.hotfix'];
+        for (const ref of refs) {
+            if (ref.isBranch()) {
+                const name = ref.shorthand();
+                if (name.indexOf(featurePrefix) === 0) {
+                    data[name.replace(featurePrefix, '')] = true;
+                }
+            }
+        }
+        return data;
+    }
+
+    /**
      * 创建一个新的feature分支
      * @param {*} name 
      */
@@ -712,6 +736,11 @@ class Repo {
         await Flow.startFeature(this.rawRepo, name, {
             sha: headCommit.sha()
         });
+        const config = await Flow.getConfig(this.rawRepo);
+        const featurePrefix = config['gitflow.prefix.feature'];
+        const develop = config['gitflow.branch.develop'];
+        const remoteName = await this.getRemoteName(`refs/heads/${develop}`);
+        await this.setUpstream(`refs/heads/${featurePrefix}${name}`, remoteName);
     }
 
     /**
@@ -723,6 +752,25 @@ class Repo {
         await Flow.startRelease(this.rawRepo, version, {
             sha: headCommit.sha()
         });
+        const config = await Flow.getConfig(this.rawRepo);
+        const featurePrefix = config['gitflow.prefix.release'];
+        const develop = config['gitflow.branch.develop'];
+        const remoteName = await this.getRemoteName(`refs/heads/${develop}`);
+        await this.setUpstream(`refs/heads/${featurePrefix}${version}`, remoteName);
+    }
+
+    /**
+     * 创建一个新的hotfix分支
+     * @param {*} version 
+     */
+    async startHotFix (version) {
+        // const headCommit = await this.rawRepo.getHeadCommit();
+        await Flow.startHotfix(this.rawRepo, version);
+        const config = await Flow.getConfig(this.rawRepo);
+        const featurePrefix = config['gitflow.prefix.hotfix'];
+        const develop = config['gitflow.branch.master'];
+        const remoteName = await this.getRemoteName(`refs/heads/${develop}`);
+        await this.setUpstream(`refs/heads/${featurePrefix}${version}`, remoteName);
     }
 
     async getCommitHistory () {
@@ -990,7 +1038,9 @@ class Repo {
 
         if (startSha !== sha) {
             data.commits = data.commits.concat(history);
-            await this.getCommitPage (startSha, data);
+            if (data.commits.length < MAX_NUM_COMMITS) {
+                await this.getCommitPage (startSha, data);
+            }
         } else {
             data.commits = data.commits.concat(last);
         }

@@ -138,12 +138,12 @@ class Head extends React.Component {
                     }
                     {
                         hasFlowBranches
-                            ? <Menu.Item command='flow-start-release'><img src={startReleaseIcon} style={{width: 12, position: 'relative', top: 2, left: -1, marginRight: 2}}/>Start Release</Menu.Item>
+                            ? <Menu.Item command='flow-start-hotfix'><img src={startHotfixIcon} style={{width: 12, position: 'relative', top: 2, left: -1, marginRight: 2}}/>Start Hotfix</Menu.Item>
                             : null
                     }
                     {
                         hasFlowBranches
-                            ? <Menu.Item command='flow-start-hotfix'><img src={startHotfixIcon} style={{width: 12, position: 'relative', top: 2, left: -1, marginRight: 2}}/>Start Hotfix</Menu.Item>
+                            ? <Menu.Item command='flow-start-release'><img src={startReleaseIcon} style={{width: 12, position: 'relative', top: 2, left: -1, marginRight: 2}}/>Start Release</Menu.Item>
                             : null
                     }
                     <Menu.Item command='flow-config'><FontIcon icon='cog' color='#1CA538'/>Config</Menu.Item>

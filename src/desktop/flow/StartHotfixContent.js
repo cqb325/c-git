@@ -10,12 +10,12 @@ class StartFeatureContent extends React.Component {
     async componentDidMount () {
         const cwd = this.props.cwd;
         this.client = new GitClient(cwd);
-        const features = await this.client.getFeatures();
+        const hotfixs = await this.client.getHotfixs();
         let index = 1;
-        let name = `feature-${index}`;
-        while (features[name]) {
+        let name = `${index}.0`;
+        while (hotfixs[`${name}`]) {
             index++;
-            name = `feature-${index}`;
+            name = `${index}.0`;
         }
         this.name.setValue(name);
     }
@@ -31,7 +31,7 @@ class StartFeatureContent extends React.Component {
     startFeature = async () => {
         if (this.isValid()) {
             const name = this.name.getValue();
-            await this.client.startFeature(name);
+            await this.client.startHotFix(name);
             this.close();
         }
     }
@@ -49,7 +49,7 @@ class StartFeatureContent extends React.Component {
             </div>
 
             <Form className='mt-10' ref={f => this.form = f}>
-                <FormControl ref={f => this.name = f} required type='text' name='name' label='Feature Name: ' itemStyle={{width: 250}}/>
+                <FormControl ref={f => this.name = f} required type='text' name='name' label='HotFix Name: ' itemStyle={{width: 250}}/>
             </Form>
 
             <div className='text-right mt-15'>

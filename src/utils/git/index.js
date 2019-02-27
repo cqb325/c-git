@@ -265,6 +265,18 @@ class GitClient {
         return features;
     }
 
+    async getHotfixs () {
+        const repo = new GitRepo(this.dir, this.credentials);
+        let features;
+        try {
+            await repo.open();
+            features = await repo.getHotfixs();
+        } finally {
+            repo.free();
+        }
+        return features;
+    }
+
     async startFeature (name) {
         const repo = new GitRepo(this.dir, this.credentials);
         let feature;
@@ -283,6 +295,18 @@ class GitClient {
         try {
             await repo.open();
             feature = await repo.startRelease(name);
+        } finally {
+            repo.free();
+        }
+        return feature;
+    }
+
+    async startHotFix (name) {
+        const repo = new GitRepo(this.dir, this.credentials);
+        let feature;
+        try {
+            await repo.open();
+            feature = await repo.startHotFix(name);
         } finally {
             repo.free();
         }

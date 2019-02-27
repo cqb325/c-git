@@ -59,6 +59,36 @@ class GitFlow {
         });
     }
 
+    async finishRelease (params) {
+        const config = await this.getConfig();
+        const name = params.name.replace(config['gitflow.prefix.release'], '');
+        return new Promise((resolve, reject) => {
+            ipcRenderer.send('finishRelease', this.dir, name, params.message);
+            ipcRenderer.once('finishRelease_res', (event, err) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve();
+                }
+            });
+        });
+    }
+
+    async finishHotFix (params) {
+        const config = await this.getConfig();
+        const name = params.name.replace(config['gitflow.prefix.hotfix'], '');
+        return new Promise((resolve, reject) => {
+            ipcRenderer.send('finishHotFix', this.dir, name, params.message);
+            ipcRenderer.once('finishHotFix_res', (event, err) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve();
+                }
+            });
+        });
+    }
+
     validateConfig (params) {
         return Flow.validateConfig(params);
     }
